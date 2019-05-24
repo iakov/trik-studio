@@ -20,23 +20,23 @@ SUBDIRS = \
 	trikQtsGeneratorLibrary \
 	trikV6QtsGenerator \
 	trikV62QtsGenerator \
+	trikPythonGeneratorLibrary \
+	trikV62PythonGenerator \
+	nxtGeneratorBase \
+	nxtOsekCGenerator \
+	ev3GeneratorBase \
+	ev3RbfGenerator \
+	pioneerLuaGenerator \
+
+CONFIG(debug, debug | release): SUBDIRS += \
+	nxtRussianCGenerator \
+	trikSharpBinaries \
 	trikFSharpGeneratorLibrary \
 	trikV6FSharpGenerator \
 	trikV62FSharpGenerator \
 	trikPascalABCGeneratorLibrary \
 	trikV6PascalABCGenerator \
 	trikV62PascalABCGenerator \
-	trikPythonGeneratorLibrary \
-	trikV62PythonGenerator \
-#	trikV6RuntimeUploaderPlugin \
-#	trikV62RuntimeUploaderPlugin \
-	trikSharpBinaries \
-	nxtGeneratorBase \
-	nxtOsekCGenerator \
-	nxtRussianCGenerator \
-	ev3GeneratorBase \
-	ev3RbfGenerator \
-	pioneerLuaGenerator \
 
 trikGeneratorBase.subdir = $$PWD/trik/trikGeneratorBase
 trikQtsGeneratorLibrary.subdir = $$PWD/trik/trikQtsGeneratorLibrary
