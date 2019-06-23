@@ -49,20 +49,25 @@ CircleWidget::CircleWidget(const QSize &size, const QString &icon, QWidget *pare
 				- (targetHeight - targetWidth * pictureHeight / pictureWidth) / 2);
 	}
 
-	QLabel * const iconLabel = new QLabel;
+	QLabel * const iconLabel = new QLabel(this);
 	iconLabel->setFixedSize(resultingRect.size());
 	iconLabel->setScaledContents(true);
 	iconLabel->setPixmap(pixmap);
 
-	QVBoxLayout * const circleLayout = new QVBoxLayout;
+	QVBoxLayout * const circleLayout = new QVBoxLayout(this);
 	circleLayout->setContentsMargins(0, 0, 0, 0);
 	circleLayout->setSpacing(0);
 	circleLayout->setMargin(0);
 	circleLayout->addWidget(iconLabel, 0, Qt::AlignCenter);
+	//circleLayout->setSizeConstraint(QLayout::SizeConstraint::SetFixedSize);
 
 	setStyleSheet("background-color: transparent;");
 	setFixedSize(size);
-	setLayout(circleLayout);
+}
+
+int CircleWidget::heightForWidth(int width) const
+{
+	return width;
 }
 
 void CircleWidget::paintEvent(QPaintEvent *event)

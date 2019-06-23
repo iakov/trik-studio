@@ -26,6 +26,7 @@ public:
 	CircleWidget(const QSize &size, const QString &icon, QWidget *parent = nullptr);
 
 protected:
+	virtual int heightForWidth(int width) const override;
 	virtual void paintEvent(QPaintEvent *) override;
 };
 

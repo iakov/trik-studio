@@ -34,7 +34,7 @@ public:
 protected:
 	virtual void enterEvent(QEvent *event) override;
 	virtual void leaveEvent(QEvent *event) override;
-
+	virtual QSize sizeHint() const override;
 private:
 	void highlight(bool on);
 

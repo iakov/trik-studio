@@ -65,15 +65,13 @@ QWidget *StartWidget::createMainWidget()
 
 	mainLayout->addWidget(header);
 	mainLayout->addLayout(contentsLayout);
-	mainLayout->setStretch(1, 10);
-	if (mRecentProjectsWidget) {
-		contentsLayout->addWidget(mRecentProjectsWidget);
-	}
+	//mainLayout->setStretch(1, 10);
 
+	contentsLayout->addWidget(mRecentProjectsWidget);
 	contentsLayout->addWidget(projectsManagement);
-	contentsLayout->addSpacing(700);
-	contentsLayout->setStretch(0, 10);
-	contentsLayout->setStretch(1, 10);
+	contentsLayout->addStretch();
+	//contentsLayout->setStretch(0, 10);
+	//contentsLayout->setStretch(1, 10);
 
 	result->setLayout(mainLayout);
 	return result;
@@ -90,14 +88,17 @@ QWidget *StartWidget::createHeader()
 	appLogo->setPixmap(QPixmap::fromImage(BrandManager::applicationLogo()).scaled(appLogo->size()
 			, Qt::KeepAspectRatio, Qt::SmoothTransformation));
 
-	QVBoxLayout * const logoLayout = new QVBoxLayout;
-	logoLayout->addWidget(appName);
-	logoLayout->addStretch();
+//	QVBoxLayout * const logoLayout = new QVBoxLayout;
+//	logoLayout->addWidget(appName);
+//	logoLayout->addStretch();
 
 	QHBoxLayout * const headerLayout = new QHBoxLayout;
-	headerLayout->addLayout(logoLayout);
+	headerLayout->setSpacing(0);
+	headerLayout->setContentsMargins(0,0,0,0);
+	headerLayout->addWidget(appName, 0, Qt::AlignTop | Qt::AlignLeft);
+	appName->setContentsMargins(0,15,0,0); //Logo pixmap has some excessive pixels above image
 	headerLayout->addStretch();
-	headerLayout->addWidget(appLogo);
+	headerLayout->addWidget(appLogo, 0, Qt::AlignTop | Qt::AlignRight);
 
 	QWidget * const header = new QWidget;
 	header->setObjectName("header");
@@ -119,12 +120,13 @@ QWidget *StartWidget::createRecentProjectsWidget()
 
 QWidget *StartWidget::createProjectsManagementWidget()
 {
-	mProjectsManagementLayout = new QBoxLayout(QBoxLayout::TopToBottom);
+	auto result = new QWidget;
+	mProjectsManagementLayout = new QBoxLayout(QBoxLayout::TopToBottom, result);
 	mProjectsManagementLayout->setSpacing(20);
 	mProjectsManagementLayout->setMargin(0);
 
 	mOpenProjectButton = new StyledButton(tr("Open project")
-			, ":/mainWindow/images/startTab/open.svg");
+			, ":/mainWindow/images/startTab/open.svg", result);
 	mOpenProjectButton->setObjectName("withIcon");
 
 	connect(mOpenProjectButton, &QPushButton::clicked, this, &StartWidget::openExistingProject);
@@ -134,7 +136,7 @@ QWidget *StartWidget::createProjectsManagementWidget()
 		const Id editor = mMainWindow->editorManager().editors()[0];
 		const QString diagramIdString = mMainWindow->editorManager().diagramNodeNameString(editor, theOnlyDiagram);
 
-		mNewProjectButton = new StyledButton(tr("New project"), ":/mainWindow/images/startTab/new.svg");
+		mNewProjectButton = new StyledButton(tr("New project"), ":/mainWindow/images/startTab/new.svg", result);
 		mNewProjectButton->setObjectName("withIcon");
 
 		QSignalMapper *newProjectMapper = new QSignalMapper(this);
@@ -152,9 +154,8 @@ QWidget *StartWidget::createProjectsManagementWidget()
 
 	mProjectsManagementLayout->addWidget(mOpenProjectButton);
 	mProjectsManagementLayout->addWidget(mNewProjectButton);
+	mProjectsManagementLayout->addStretch();
 
-	QWidget * const result = new QWidget;
-	result->setLayout(mProjectsManagementLayout);
 	return result;
 }
 
@@ -178,6 +179,7 @@ QLayout *StartWidget::createRecentProjectsList(const QString &recentProjects)
 	QVBoxLayout * const mainLayout = new QVBoxLayout;
 	QVBoxLayout * const recentProjectsLayout = new QVBoxLayout;
 	recentProjectsLayout->setContentsMargins(0, 0, 0, 0);
+	recentProjectsLayout->setSizeConstraint(QLayout::SizeConstraint::SetMinAndMaxSize);
 
 	QLabel * const recentProjectsLabel = new QLabel(tr("Recent projects"));
 	recentProjectsLabel->setWordWrap(true);
@@ -190,7 +192,7 @@ QLayout *StartWidget::createRecentProjectsList(const QString &recentProjects)
 	mainLayout->addWidget(spacer);
 	mainLayout->addLayout(recentProjectsLayout);
 
-	mainLayout->addStretch(0);
+	mainLayout->addStretch();
 
 	QSignalMapper * const projectNameMapper = new QSignalMapper(this);
 	connect(projectNameMapper, SIGNAL(mapped(QString)), this, SLOT(openRecentProject(QString)));
@@ -245,10 +247,8 @@ QWidget *StartWidget::createPluginsList()
 	scrollArea->setWidget(innerWidget);
 
 	QHBoxLayout * const mainLayout = new QHBoxLayout;
-	mainLayout->addWidget(circleWidget, Qt::AlignCenter);
-	mainLayout->addWidget(scrollArea);
-	mainLayout->setStretch(0, 0);
-	mainLayout->setStretch(1, 10);
+	mainLayout->addWidget(circleWidget, 0, Qt::AlignCenter);
+	mainLayout->addWidget(scrollArea, 10);
 	mainLayout->setMargin(0);
 
 	QWidget * const result = new QWidget;
@@ -373,35 +373,36 @@ void StartWidget::setVisibleForInterpreterButton(const bool visible)
 		toCentralize << mNewProjectButton << mOpenProjectButton;
 	}
 
-	if (needLayoutHorizontally) {
-		for (QPushButton * const button : toCentralize) {
-			centralizeButton(button);
-		}
+	for (QPushButton * const button : toCentralize) {
+		centralizeButton(button);
+	}
 
+	if (needLayoutHorizontally) {
 		mProjectsManagementLayout->setDirection(QBoxLayout::LeftToRight);
 	}
 }
 
 void StartWidget::centralizeButton(QPushButton * const styledButton)
 {
+	return;
 	if (!styledButton) {
 		return;
 	}
 
-	QBoxLayout * const layout = static_cast<QBoxLayout *>(styledButton->layout());
-	layout->setDirection(QBoxLayout::TopToBottom);
-	QWidget * const icon = layout->itemAt(0)->widget();
-	QLabel * const label = static_cast<QLabel *>(layout->itemAt(1)->widget());
-	label->setAlignment(Qt::AlignHCenter);
-	layout->setAlignment(icon, Qt::AlignHCenter | Qt::AlignBottom);
-	layout->setAlignment(label, Qt::AlignHCenter | Qt::AlignTop);
+	auto layout = qobject_cast<QBoxLayout *>(styledButton->layout());
+	auto icon   = layout->findChild<CircleWidget*>();
+	auto label  = layout->findChild<QLabel*>("withoutIcon");
+//	label->setAlignment(Qt::AlignHCenter);
+//	layout->insertStretch(0, 10);
+//	layout->setAlignment(icon, Qt::AlignHCenter | Qt::AlignBottom);
+//	layout->setAlignment(label, Qt::AlignHCenter | Qt::AlignTop);
+//	layout->insertStretch(layout->count(), 10);
 	layout->activate();
 	layout->update();
 	styledButton->update();
 
 	mProjectsManagementLayout->setAlignment(styledButton, Qt::AlignVCenter);
-	const int index = mProjectsManagementLayout->indexOf(styledButton);
-	mProjectsManagementLayout->setStretch(index, 10000);
+	//mProjectsManagementLayout->setStretchFactor(styledButton, 10000);
 }
 
 void StartWidget::paintEvent(QPaintEvent *event)

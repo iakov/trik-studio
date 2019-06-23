@@ -20,28 +20,34 @@
 #include "brandManager/brandManager.h"
 #include "circleWidget.h"
 
+#include <QSizePolicy>
+
 using namespace qReal;
 
 StyledButton::StyledButton(const QString &text, const QString &icon, QWidget *parent)
 	: QPushButton(parent)
 {
 	setMouseTracking(true);
-
+	setFlat(true);
 	auto direction = icon.isEmpty() ? QBoxLayout::LeftToRight : QBoxLayout::TopToBottom;
-	QBoxLayout * const layout = new QBoxLayout(direction);
+	auto layout = new QBoxLayout(direction, this);
+	layout->setSizeConstraint(QLayout::SizeConstraint::SetMinimumSize);
 
 	if (!icon.isEmpty()) {
-		setObjectName("withIcon");
 		layout->addStretch();
-		QWidget * const circleWidget = new CircleWidget(QSize(100, 100), icon);
-		layout->addWidget(circleWidget);
-		layout->setAlignment(circleWidget, Qt::AlignHCenter);
+		setObjectName("withIcon");
+		QWidget * const circleWidget = new CircleWidget(QSize(100, 100), icon, this);
+		layout->addWidget(circleWidget, 0, Qt::AlignCenter);
 		bindHighlightedOnHover(circleWidget);
+		setMinimumSize(QSize(200,200));
+		setSizePolicy(QSizePolicy::Policy::MinimumExpanding, QSizePolicy::Policy::MinimumExpanding);
 	}
 
-	QLabel * const textLabel = new QLabel(text);
+	QLabel * const textLabel = new QLabel(text, this);
 	textLabel->setWordWrap(true);
 	textLabel->setAttribute(Qt::WA_Hover);
+	auto textAlignment = icon.isEmpty() ?  Qt::AlignLeft : Qt::AlignHCenter;
+	textLabel->setAlignment(textAlignment);
 	if (!icon.isEmpty()) {
 		textLabel->setObjectName("withoutIcon");
 	}
@@ -50,20 +56,12 @@ StyledButton::StyledButton(const QString &text, const QString &icon, QWidget *pa
 	// so second line becomes clipped off. We use two lines for some buttons, so we manually set minimum height of a
 	// label to fit two lines with our default font. Somebody who has internet connection shall provide more adequate
 	// solution.
-	textLabel->setMinimumHeight(55);
+	//textLabel->setMinimumHeight(55);
 
-	layout->addWidget(textLabel);
+	layout->addWidget(textLabel, 0, textAlignment);
 	bindHighlightedOnHover(textLabel);
-
-	if (!icon.isEmpty()) {
-		layout->setAlignment(textLabel, Qt::AlignHCenter);
-		layout->addStretch();
-	}
-
-	setFlat(true);
+	layout->addStretch();
 	setStyleSheet(BrandManager::styles()->startTabButtonStyle());
-	setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
-	setLayout(layout);
 }
 
 void StyledButton::bindHighlightedOnHover(QWidget * const widget)
@@ -82,6 +80,13 @@ void StyledButton::leaveEvent(QEvent *event)
 {
 	QPushButton::leaveEvent(event);
 	highlight(false);
+}
+
+QSize StyledButton::sizeHint() const
+{
+	auto size = QPushButton::sizeHint();
+	qDebug() << size;
+	return QSize(size.width(), size.width());
 }
 
 void StyledButton::highlight(bool on)
