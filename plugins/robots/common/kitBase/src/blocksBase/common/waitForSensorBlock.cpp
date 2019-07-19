@@ -17,7 +17,9 @@
 #include <utils/abstractTimer.h>
 
 #include "kitBase/robotModel/robotParts/scalarSensor.h"
+#include "kitBase/robotModel/robotParts/vectorSensor.h"
 #include "kitBase/robotModel/robotModelUtils.h"
+#include <functional>
 
 using namespace kitBase;
 using namespace blocksBase::common;
@@ -28,20 +30,34 @@ WaitForSensorBlock::WaitForSensorBlock(RobotModelInterface &robotModel)
 {
 }
 
+template<typename SensorType>
+SensorType *tryReadDevice(WaitForSensorBlock *that) {
+	if (auto sensor = RobotModelUtils::findDevice<SensorType>(that->mRobotModel, that->mPort)) {
+		using namespace std::placeholders;
+		using t = decltype(std::mem_fn(&robotParts::VectorSensor::newData))::second_argument_type;
+		auto f = std::bind(&WaitForSensorBlock::responseSlot, that, std::bind(&QVariant::fromValue<t>, _1));
+		connect(sensor, &SensorType::newData, that, f, Qt::UniqueConnection);
+		connect(sensor, &robotParts::AbstractSensor::failure
+				, that, &WaitForSensorBlock::failureSlot, Qt::UniqueConnection);
+		that->mActiveWaitingTimer->start();
+		sensor->read();
+		return sensor;
+	}	else {
+		return nullptr;
+	}
+}
+
 void WaitForSensorBlock::run()
 {
 	const QString port = this->port();
 
 	/// @todo Works only with scalar sensors.
 	mPort = RobotModelUtils::findPort(mRobotModel, port, input);
-	robotParts::ScalarSensor * const sensor = RobotModelUtils::findDevice<robotParts::ScalarSensor>(mRobotModel, mPort);
-	if (sensor) {
-		connect(sensor, &robotParts::ScalarSensor::newData
-				, this, &WaitForSensorBlock::responseSlot, Qt::UniqueConnection);
-		connect(sensor, &robotParts::AbstractSensor::failure
-				, this, &WaitForSensorBlock::failureSlot, Qt::UniqueConnection);
-		mActiveWaitingTimer->start();
-		sensor->read();
+
+	if (auto sensor = tryReadDevice<robotParts::ScalarSensor>(this)) {
+		/* Do nothing, everything is fine */
+	} if (auto sensor = tryReadDevice<robotParts::VectorSensor>(this)) {
+		/* Do nothing, everything is fine */
 	} else {
 		mActiveWaitingTimer->stop();
 		error(tr("%1 is not configured on port %2").arg(device().friendlyName(), mPort.userFriendlyName()));

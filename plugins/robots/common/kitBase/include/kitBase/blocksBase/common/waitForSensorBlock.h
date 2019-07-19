@@ -44,6 +44,10 @@ protected:
 private:
 	/// Shall be reimplemented to do value check when new data from sensor is ready.
 	virtual void responseSlot(const QVariant &reading) = 0;
+
+	/// Helper template function, but not defined here to reduce compilation time
+	template<typename SensorType>
+	friend inline SensorType *tryReadDevice(WaitForSensorBlock *that);
 };
 
 }
