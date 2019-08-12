@@ -255,9 +255,17 @@
         <translation>Остановить программу</translation>
     </message>
     <message>
-        <location line="+186"/>
+        <location line="+185"/>
         <source>Enter robot`s IP-address here...</source>
         <translation>Введите IP-адрес робота...</translation>
+    </message>
+</context>
+<context>
+    <name>trik::TrikTextualInterpreter</name>
+    <message>
+        <location filename="../../../../plugins/robots/interpreters/trikKitInterpreterCommon/src/trikTextualInterpreter.cpp" line="-94"/>
+        <source>Unsupported script file type</source>
+        <translation>Неверный формат файла</translation>
     </message>
 </context>
 </TS>

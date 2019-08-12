@@ -275,8 +275,7 @@ void TrikKitInterpreterPluginBase::init(const kitBase::KitPluginConfigurator &co
 		auto textTab = dynamic_cast<qReal::text::QScintillaTextEdit *>(mMainWindow->currentTab());
 		bool isTextualInterp = mTextualInterpreter->supportedRobotModelNames().contains(model.name());
 		/// FIX IT!!!!!!
-		mStart.setVisible(mIsModelSelected && isTextualInterp && textTab
-				&& textTab->currentLanguage().extension == "js");
+		mStart.setVisible(mIsModelSelected && isTextualInterp && textTab);
 		mStop.setVisible(false); // interpretation should always stop when switching models?
 	});
 
@@ -290,7 +289,7 @@ void TrikKitInterpreterPluginBase::init(const kitBase::KitPluginConfigurator &co
 	});
 
 	connect(&configurer.interpreterControl()
-			, &kitBase::InterpreterControlInterface::startJsInterpretation
+			, &kitBase::InterpreterControlInterface::startScriptInterpretation
 			, this
 			, [this]() {
 		if (!mTextualInterpreter->isRunning() && mIsModelSelected) { // temporary
