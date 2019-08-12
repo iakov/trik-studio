@@ -245,7 +245,7 @@
         <translation>Оставновить</translation>
     </message>
     <message>
-        <location line="+210"/>
+        <location line="+209"/>
         <source>Run program</source>
         <translation>Выполнить программу</translation>
     </message>

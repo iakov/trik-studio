@@ -188,7 +188,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location line="+210"/>
+        <location line="+209"/>
         <source>Run program</source>
         <translation type="unfinished"></translation>
     </message>
