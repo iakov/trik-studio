@@ -409,19 +409,20 @@ void RobotsPluginFacade::initSensorWidgets()
 void RobotsPluginFacade::initKitPlugins(const qReal::PluginConfigurator &configurer)
 {
 	/// @todo: Check that this code works when different kit is selected
-	for (const QString &kitId : mKitPluginManager.kitIds()) {
-		for (kitBase::KitPluginInterface * const kit : mKitPluginManager.kitsById(kitId)) {
+	for (auto &&kitId: mKitPluginManager.kitIds()) {
+		for (auto kit: mKitPluginManager.kitsById(kitId)) {
+			qDebug() << kit;
 			kit->init(kitBase::KitPluginConfigurator(configurer
 					, mRobotModelManager, *mParser, mEventsForKitPlugin, mProxyInterpreter));
 
-			for (const kitBase::robotModel::RobotModelInterface *model : kit->robotModels()) {
+			for (auto model : kit->robotModels()) {
 				initFactoriesFor(kitId, model, configurer);
 				connect(&mEventsForKitPlugin, &kitBase::EventsForKitPluginInterface::interpretationStarted
 						, model, &kitBase::robotModel::RobotModelInterface::onInterpretationStarted);
 			}
 
 			mDevicesConfigurationManager->connectDevicesConfigurationProvider(kit->devicesConfigurationProvider());
-			for (kitBase::InterpreterInterface * const interpreter : kit->customInterpreters()) {
+			for (auto interpreter: kit->customInterpreters()) {
 				registerInterpreter(interpreter);
 			}
 		}

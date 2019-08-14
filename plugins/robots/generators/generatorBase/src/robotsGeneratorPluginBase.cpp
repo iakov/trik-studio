@@ -57,7 +57,7 @@ QString RobotsGeneratorPluginBase::defaultProjectName() const
 bool RobotsGeneratorPluginBase::canGenerateTo(const QString &project)
 {
 	const QFileInfo fileInfo = generationTarget(project);
-	const int difference = fileInfo.lastModified().toMSecsSinceEpoch() - fileInfo.created().toMSecsSinceEpoch();
+	const int difference = fileInfo.lastModified().toMSecsSinceEpoch() - fileInfo.birthTime().toMSecsSinceEpoch();
 	return !fileInfo.exists() || difference < maxTimestampsDifference;
 }
 

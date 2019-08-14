@@ -81,9 +81,8 @@ private:
 	{
 		QList<InterfaceType *> interfacesList;
 
-		for (const QObject *currentInterface : interfacesToWrap) {
-			InterfaceType *castedInterface = qobject_cast<InterfaceType *>(currentInterface);
-			if (castedInterface) {
+		for (auto &&currentInterface : interfacesToWrap) {
+			if (auto castedInterface = qobject_cast<InterfaceType *>(currentInterface)) {
 				interfacesList.append(castedInterface);
 			}
 		}
