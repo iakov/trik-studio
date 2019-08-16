@@ -273,8 +273,8 @@ void TrikKitInterpreterPluginBase::init(const kitBase::KitPluginConfigurator &co
 		/// @todo: would probably make sense to make the current opened tab info available globally somewhere
 		auto textTab = dynamic_cast<qReal::text::QScintillaTextEdit *>(mMainWindow->currentTab());
 		bool isTextualInterp = mTextualInterpreter->supportedRobotModelNames().contains(model.name());
-		/// FIX IT!!!!!!
 		mStart.setVisible(mIsModelSelected && isTextualInterp && textTab);
+		mStart.setVisible(mStart.isVisible() && textTab->currentLanguage().extension == "js");
 		mStop.setVisible(false); // interpretation should always stop when switching models?
 	});
 
