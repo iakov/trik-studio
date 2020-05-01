@@ -28,6 +28,7 @@
 
 #include <qrgui/textEditor/qscintillaTextEdit.h>
 #include <qrgui/textEditor/languageInfo.h>
+#include <QsLog.h>
 
 using namespace trik;
 using namespace qReal;
@@ -74,25 +75,23 @@ void TrikKitInterpreterPluginBase::initKitInterpreterPluginBase
 	if (!friendlyKitName().contains("2014")) {
 		if (!qEnvironmentVariableIsEmpty("TRIK_PYTHONPATH")) {
 			enablePython = true;
-		} else if (PlatformInfo::osType().startsWith("windows")) {
-			auto dir = QDir(QCoreApplication::applicationDirPath());
-			dir.makeAbsolute();
+        } else {
+            auto dir = QDir(PlatformInfo::applicationDirPath());
+            dir.makeAbsolute();
 			auto isOne = false;
 			QByteArray value;
-			for (auto &&file : dir.entryList()) {
-				if (file.endsWith(".zip") && file.startsWith("python"))
-				{
-					if (isOne) {
-						isOne = false;
-						value.clear();
-						break;
-					}
-					isOne = true;
-					value = dir.filePath(file).toLatin1();
-				}
-			}
+            for (auto &&file : dir.entryList({"python3*zip"}, QDir::AllEntries | QDir::Readable)) {
+                if (isOne) {
+                    isOne = false;
+                    value.clear();
+                    break;
+                }
+                isOne = true;
+                value = dir.filePath(file).toLatin1();
+            }
 			if (isOne && !value.isNull()) {
 				qputenv("TRIK_PYTHONPATH", value);
+                QLOG_INFO()<< "TRIK_PYTHONPATH is set to autodetected"<< value;
 				enablePython = true;
 			}
 		}
