@@ -21,13 +21,13 @@ using namespace qReal;
 AbstractSimpleGenerator::AbstractSimpleGenerator(const qrRepo::RepoApi &repo
 		, GeneratorCustomizer &customizer
 		, const Id &id
-		, QObject *parent)
-	: QObject(parent)
-	, TemplateParametrizedEntity(customizer.factory()->pathsToTemplates())
+		, QObject *owner)
+	: TemplateParametrizedEntity(customizer.factory()->pathsToTemplates())
 	, mRepo(repo)
 	, mCustomizer(customizer)
 	, mId(id)
 {
+	QObject::connect(owner, &QObject::destroyed, [this](){ delete this; });
 }
 
 AbstractSimpleGenerator::~AbstractSimpleGenerator()

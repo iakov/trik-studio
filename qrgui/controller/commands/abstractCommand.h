@@ -25,7 +25,6 @@ namespace commands {
 class QRGUI_CONTROLLER_EXPORT AbstractCommand : public QObject, public QUndoCommand
 {
 	Q_OBJECT
-
 public:
 	AbstractCommand();
 	virtual ~AbstractCommand();
