@@ -22,6 +22,7 @@ class Rotater;
 
 class QRUTILS_EXPORT RotateItem : public AbstractItem
 {
+	Q_OBJECT
 public:
 	explicit RotateItem(QGraphicsItem *parent = nullptr);
 
