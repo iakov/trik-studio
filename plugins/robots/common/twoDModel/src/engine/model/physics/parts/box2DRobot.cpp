@@ -85,10 +85,8 @@ Box2DRobot::~Box2DRobot() {
 
 void Box2DRobot::stop()
 {
-	if (mIsStopping){
-		mBody->SetLinearVelocity(b2Vec2(0, 0));
-		mBody->SetAngularVelocity(0);
-	}
+	mBody->SetLinearVelocity(b2Vec2(0, 0));
+	mBody->SetAngularVelocity(0);
 }
 
 void Box2DRobot::startStopping()
@@ -173,10 +171,10 @@ void Box2DRobot::reinitSensor(const twoDModel::view::SensorItem &sensor)
 	QPolygonF collidingPolygon = sensor.collidingPolygon();
 	QPointF localCenter = collidingPolygon.boundingRect().center();
 
-	QPointF deltaToCenter = mModel->rotationCenter() - mModel->position();
+	QPointF deltaToCenter = mModel->robotCenter() - mModel->position();
 	QPointF localPos = sensor.pos() - deltaToCenter;
 	QTransform transform;
-	QPointF dif = mModel->rotationCenter();
+	QPointF dif = mModel->robotCenter();
 	transform.translate(-dif.x(), -dif.y());
 	transform.rotate(mModel->rotation());
 	localPos = transform.map(localPos);
@@ -184,7 +182,7 @@ void Box2DRobot::reinitSensor(const twoDModel::view::SensorItem &sensor)
 	transform.translate(dif.x(), dif.y());
 	localPos = transform.map(localPos);
 
-	const b2Vec2 pos = mEngine->positionToBox2D(localPos - localCenter + mModel->rotationCenter());
+	const b2Vec2 pos = mEngine->positionToBox2D(localPos - localCenter + mModel->robotCenter());
 	// IMPORTANT: we connect every sensor with box2d circle item.
 	// So rotation of sensor doesn't matter, we set rotation corresponding to robot.
 	// if in future it will be changed, you'll see some strange behavior, because of joints. See connectSensor method.

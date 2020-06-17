@@ -27,7 +27,6 @@ using namespace graphicsUtils;
 
 WallItem::WallItem(const QPointF &begin, const QPointF &end)
 	: mImage(":/icons/2d_wall.png")
-	, mWallWidth(10)
 {
 	setX1(begin.x());
 	setY1(begin.y());
@@ -118,7 +117,7 @@ void WallItem::drawItem(QPainter *painter, const QStyleOptionGraphicsItem *optio
 void WallItem::setPenBrushForExtraction(QPainter *painter, const QStyleOptionGraphicsItem *option)
 {
 	Q_UNUSED(option)
-	QPen pen(mStrokePen);
+	QPen pen(getStrokePen());
 	if (!isSelected() && isHovered()) {
 		pen.setWidthF(2.25);
 		pen.setDashPattern({3,3});
@@ -396,9 +395,9 @@ qreal WallItem::alignedCoordinate(qreal coord, int coef, const int indexGrid) co
 {
 	const int coefSign = coef ? coef / qAbs(coef) : 0;
 
-	if (qAbs(qAbs(coord) - qAbs(coef) * indexGrid) <= indexGrid / 2) {
+	if (qAbs(qAbs(coord) - qAbs(coef) * indexGrid) <= indexGrid / 2.0) {
 		return coef * indexGrid;
-	} else if (qAbs(qAbs(coord) - (qAbs(coef) + 1) * indexGrid) <= indexGrid / 2) {
+	} else if (qAbs(qAbs(coord) - (qAbs(coef) + 1) * indexGrid) <= indexGrid / 2.0) {
 		return (coef + coefSign) * indexGrid;
 	}
 

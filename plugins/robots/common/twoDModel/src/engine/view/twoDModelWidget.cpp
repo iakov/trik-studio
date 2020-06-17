@@ -154,6 +154,15 @@ TwoDModelWidget::TwoDModelWidget(Model &model, QWidget *parent)
 	mUi->robotWidthInCm->setButtonSymbols(QAbstractSpinBox::NoButtons);
 	mUi->robotMassInGr->setValue(robotMass);
 	mUi->robotMassInGr->setButtonSymbols(QAbstractSpinBox::NoButtons);
+
+	mConnections << connect(&mModel, &model::Model::robotAdded, [this](){
+		auto robotModels = mModel.robotModels();
+		auto robotTrack = robotModels.isEmpty() || robotModels[0]->info().wheelsPosition().size() < 2 ? robotWidth
+				: qAbs(robotModels[0]->info().wheelsPosition()[0].y() - robotModels[0]->info().wheelsPosition()[1].y());
+		mUi->robotTrackInCm->setValue(robotTrack / pixelsInCm);
+	});
+	mUi->robotTrackInCm->setValue(robotWidth / pixelsInCm);
+	mUi->robotTrackInCm->setButtonSymbols(QAbstractSpinBox::NoButtons);
 }
 
 TwoDModelWidget::~TwoDModelWidget()
@@ -520,9 +529,13 @@ void TwoDModelWidget::loadWorldModelWithoutRobot()
 	}
 
 	// TODO: Split saves and remove temporary hack
-	auto saveRoot = save.firstChildElement("root");
-	auto currentRoot = generateWorldModelXml().firstChildElement("root");
-	saveRoot.replaceChild(currentRoot.firstChildElement("robots"), saveRoot.firstChildElement("robots"));
+	auto saveRobot = save.firstChildElement("root").firstChildElement("robots").firstChildElement("robot");
+	auto currentRobot = generateWorldModelXml().firstChildElement("root")
+			.firstChildElement("robots").firstChildElement("robot");
+
+	saveRobot.replaceChild(saveRobot.firstChildElement("sensors"), currentRobot.firstChildElement("sensors"));
+	saveRobot.replaceChild(saveRobot.firstChildElement("wheels"), currentRobot.firstChildElement("wheels"));
+	saveRobot.setAttribute("id", currentRobot.attribute("id"));
 
 	auto command = new commands::LoadWorldCommand(*this, save);
 	if (mController) {

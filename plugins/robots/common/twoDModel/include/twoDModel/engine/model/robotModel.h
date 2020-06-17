@@ -75,7 +75,7 @@ public:
 	RobotModel(twoDModel::robotModel::TwoDRobotModel &robotModel
 			, const Settings &settings, QObject *parent = nullptr);
 
-	~RobotModel();
+	~RobotModel() = default;
 
 	void reinit();
 
@@ -135,7 +135,7 @@ public:
 	void markerUp();
 
 	/// Returns a position of the center of the robot in scene coordinates.
-	QPointF rotationCenter() const;
+	QPointF robotCenter() const;
 
 	/// Returns the item whose scene position will determine robot`s start position.
 	/// Transfers ownership.
@@ -180,8 +180,7 @@ signals:
 private:
 	QVector2D robotDirectionVector() const;
 
-	Wheel *initMotor(int radius, int speed, long unsigned int degrees
-			, const kitBase::robotModel::PortInfo &port, bool isUsed);
+	Wheel *initMotor(int radius, int speed, uint64_t degrees, const kitBase::robotModel::PortInfo &port, bool isUsed);
 
 	void countNewForces();
 	void countBeep();
@@ -202,7 +201,7 @@ private:
 
 	/// Simulated robot motors.
 	/// Has ownership.
-	QHash<kitBase::robotModel::PortInfo, Wheel *> mMotors;
+	QHash<kitBase::robotModel::PortInfo, QSharedPointer<Wheel>> mMotors;
 	/// Stores how many degrees the motor rotated on.
 	QHash<kitBase::robotModel::PortInfo, qreal> mTurnoverEngines;
 	/// Describes which wheel is driven by which motor.

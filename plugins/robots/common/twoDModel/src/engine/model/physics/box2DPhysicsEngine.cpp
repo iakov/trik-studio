@@ -106,7 +106,7 @@ bool Box2DPhysicsEngine::itemTracked(QGraphicsItem * const item)
 void Box2DPhysicsEngine::addRobot(model::RobotModel * const robot)
 {
 	PhysicsEngineBase::addRobot(robot);
-	addRobot(robot, robot->rotationCenter(), robot->rotation());
+	addRobot(robot, robot->robotCenter(), robot->rotation());
 
 	mPrevPosition = mBox2DRobots[robot]->getBody()->GetPosition();
 	mPrevAngle = mBox2DRobots[robot]->getBody()->GetAngle();
@@ -251,8 +251,15 @@ void Box2DPhysicsEngine::recalculateParameters(qreal timeInterval)
 			const qreal speed1 = pxToM(wheelLinearSpeed(*robot, robot->leftWheel())) / secondsInterval * sAdpt;
 			const qreal speed2 = pxToM(wheelLinearSpeed(*robot, robot->rightWheel())) / secondsInterval * sAdpt;
 
-			mLeftWheels[robot]->keepConstantSpeed(speed1);
-			mRightWheels[robot]->keepConstantSpeed(speed2);
+			if (qAbs(speed1) + qAbs(speed2) < b2_epsilon) {
+				mBox2DRobots[robot]->stop();
+				mLeftWheels[robot]->stop();
+				mRightWheels[robot]->stop();
+			}
+			else {
+				mLeftWheels[robot]->keepConstantSpeed(speed1);
+				mRightWheels[robot]->keepConstantSpeed(speed2);
+			}
 		}
 
 		mPrevPosition = rBody->GetPosition();
@@ -379,6 +386,7 @@ void Box2DPhysicsEngine::itemAdded(QGraphicsItem * const item)
 		connect(abstractItem, &graphicsUtils::AbstractItem::x2Changed, this, onItemDraggedLambda);
 		connect(abstractItem, &graphicsUtils::AbstractItem::y1Changed, this, onItemDraggedLambda);
 		connect(abstractItem, &graphicsUtils::AbstractItem::y2Changed, this, onItemDraggedLambda);
+		connect(abstractItem, &graphicsUtils::AbstractItem::positionChanged, this, onItemDraggedLambda);
 
 		connect(abstractItem, &graphicsUtils::AbstractItem::mouseInteractionStarted, this, [=](){
 			onPressedReleasedSelectedItems(false);

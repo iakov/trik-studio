@@ -854,7 +854,7 @@ QRectF NodeElement::contentsRect() const
 
 QRectF NodeElement::boundingRect() const
 {
-	return mContents.adjusted(-2 * kvadratik, -2 * kvadratik, kvadratik, kvadratik);
+	return mContents.adjusted(-2 * squareSize, -2 * squareSize, squareSize, squareSize);
 }
 
 void NodeElement::updateData()
@@ -1085,7 +1085,7 @@ void NodeElement::updateDynamicLabels()
 	}
 }
 
-bool NodeElement::compareDynamicLabels(QString labelsPack1, QString labelsPack2) const
+bool NodeElement::compareDynamicLabels(const QString &labelsPack1, const QString &labelsPack2) const
 {
 	QDomDocument dynamicLabels1;
 	dynamicLabels1.setContent(labelsPack1);
@@ -1446,16 +1446,14 @@ void NodeElement::initRenderedDiagram()
 
 QRectF NodeElement::diagramRenderingRect() const
 {
-	const NodeElement *initial = new NodeElement(
+	const NodeElement initial(
 			mLogicalAssistApi.editorManagerInterface().elementType(id()).toNode()
 			, id().sameTypeId()
 			, mModels
 			);
 
-	const qreal xCoeff = (boundingRect().width() - 3 * kvadratik) / (initial->boundingRect().width() - 3 * kvadratik);
-	const qreal yCoeff = (boundingRect().height() - 3 * kvadratik) / (initial->boundingRect().height() - 3 *kvadratik);
-
-	delete initial;
+	const qreal xCoeff = (boundingRect().width() - 3 * squareSize) / (initial.boundingRect().width() - 3 * squareSize);
+	const qreal yCoeff = (boundingRect().height()- 3 * squareSize) / (initial.boundingRect().height()- 3 * squareSize);
 
 	// QReal:BP hardcode
 	// TODO: Remove this.

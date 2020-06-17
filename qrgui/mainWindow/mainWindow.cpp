@@ -81,6 +81,8 @@
 #include <textEditor/codeBlockManager.h>
 #include <textEditor/qscintillaTextEdit.h>
 
+#include <QKeySequence>
+
 #include "qrealApplication.h"
 #include "errorReporter.h"
 #include "shapeEdit/shapeEdit.h"
@@ -104,17 +106,11 @@ MainWindow::MainWindow(const QString &fileToOpen)
 	: mUi(new Ui::MainWindowUi)
 	, mSplashScreen(new SplashScreen(SettingsManager::value("Splashscreen").toBool()))
 	, mController(new Controller)
-	, mCurrentEditor(nullptr)
 	, mRootIndex(QModelIndex())
-	, mErrorReporter(nullptr)
-	, mIsFullscreen(false)
 	, mPreferencesDialog(this)
 	, mRecentProjectsLimit(SettingsManager::value("recentProjectsLimit").toInt())
-	, mRecentProjectsMapper(new QSignalMapper())
-	, mStartWidget(nullptr)
 	, mSceneCustomizer(new SceneCustomizer())
 	, mInitialFileToOpen(fileToOpen)
-	, mRestoreDefaultSettingsOnClose(false)
 {
 	mUi->setupUi(this);
 	mUi->paletteTree->initMainWindow(this);
@@ -127,8 +123,8 @@ MainWindow::MainWindow(const QString &fileToOpen)
 
 	mFacade.reset(new SystemFacade());
 	mPropertyModel.reset(new PropertyEditorModel(mFacade->editorManager()));
-	mTextManager = new text::TextManager(mFacade->events(), *this);
-	mProjectManager = new ProjectManagerWrapper(this, mTextManager);
+	mTextManager.reset(new text::TextManager(mFacade->events(), *this));
+	mProjectManager.reset(new ProjectManagerWrapper(this, &*mTextManager));
 
 	initRecentProjectsMenu();
 	initToolManager();
@@ -143,7 +139,7 @@ MainWindow::MainWindow(const QString &fileToOpen)
 
 	initDocks();
 
-	mErrorReporter = new gui::ErrorReporter(mUi->errorListWidget, mUi->errorDock);
+	mErrorReporter.reset(new gui::ErrorReporter(mUi->errorListWidget, mUi->errorDock));
 	mErrorReporter->updateVisibility(SettingsManager::value("warningWindow").toBool());
 	mUi->errorDock->toggleViewAction()->setShortcut(QKeySequence(Qt::ALT + Qt::Key_1));
 	addAction(mUi->errorDock->toggleViewAction());
@@ -172,8 +168,8 @@ MainWindow::MainWindow(const QString &fileToOpen)
 	}
 
 	mFindReplaceDialog = new FindReplaceDialog(models().logicalRepoApi(), this);
-	mFindHelper = new FindManager(models().repoControlApi()
-			, models().mutableLogicalRepoApi(), this, mFindReplaceDialog);
+	mFindHelper.reset(new FindManager(models().repoControlApi()
+									  , models().mutableLogicalRepoApi(), this, mFindReplaceDialog));
 	connectActions();
 	connectSystemEvents();
 	initExplorers();
@@ -209,7 +205,7 @@ void MainWindow::connectActions()
 	});
 
 	connect(mUi->actionSave, &QAction::triggered, this, &MainWindow::tryToSave);
-	connect(mUi->actionSave_as, &QAction::triggered, mProjectManager, &ProjectManagerWrapper::suggestToSaveAs);
+	connect(mUi->actionSave_as, &QAction::triggered, &*mProjectManager, &ProjectManagerWrapper::suggestToSaveAs);
 	connect(mUi->actionSave_diagram_as_a_picture, &QAction::triggered, this, &MainWindow::saveDiagramAsAPicture);
 	connect(mUi->actionPrint, &QAction::triggered, this, &MainWindow::print);
 	connect(mUi->actionMakeSvg, &QAction::triggered, this, &MainWindow::makeSvg);
@@ -217,7 +213,7 @@ void MainWindow::connectActions()
 	connect(mUi->actionNewProject, &QAction::triggered
 			, this, static_cast<void (MainWindow::*)()>(&MainWindow::createProject));
 	connect(mUi->actionNew_Diagram, &QAction::triggered
-			, mProjectManager, &ProjectManagerWrapper::suggestToCreateDiagram);
+			, &*mProjectManager, &ProjectManagerWrapper::suggestToCreateDiagram);
 
 	connect(mUi->logicalModelExplorer, &ModelExplorer::elementRemoved
 			, this, &MainWindow::deleteFromLogicalExplorer);
@@ -323,9 +319,9 @@ void MainWindow::connectActions()
 		}
 	});
 
-	connect(mFindReplaceDialog, &FindReplaceDialog::replaceClicked, mFindHelper, &FindManager::handleReplaceDialog);
-	connect(mFindReplaceDialog, &FindReplaceDialog::findModelByName, mFindHelper, &FindManager::handleFindDialog);
-	connect(mFindReplaceDialog, &FindReplaceDialog::chosenElement, mFindHelper, &FindManager::handleRefsDialog);
+	connect(mFindReplaceDialog, &FindReplaceDialog::replaceClicked, &*mFindHelper, &FindManager::handleReplaceDialog);
+	connect(mFindReplaceDialog, &FindReplaceDialog::findModelByName, &*mFindHelper, &FindManager::handleFindDialog);
+	connect(mFindReplaceDialog, &FindReplaceDialog::chosenElement, &*mFindHelper, &FindManager::handleRefsDialog);
 
 	SettingsListener::listen("PaletteRepresentation", this, &MainWindow::changePaletteRepresentation);
 	SettingsListener::listen("PaletteIconsInARowCount", this, &MainWindow::changePaletteRepresentation);
@@ -333,17 +329,17 @@ void MainWindow::connectActions()
 	SettingsListener::listen("pathToImages", this, &MainWindow::updatePaletteIcons);
 	connect(&mPreferencesDialog, &PreferencesDialog::settingsApplied, this, &qReal::MainWindow::applySettings);
 
-	connect(mController, &Controller::canUndoChanged, mUi->actionUndo, &QAction::setEnabled);
-	connect(mController, &Controller::canRedoChanged, mUi->actionRedo, &QAction::setEnabled);
-	connect(mController, &Controller::modifiedChanged, mProjectManager, &ProjectManagerWrapper::setStackUnsaved);
+	connect(&*mController, &Controller::canUndoChanged, mUi->actionUndo, &QAction::setEnabled);
+	connect(&*mController, &Controller::canRedoChanged, mUi->actionRedo, &QAction::setEnabled);
+	connect(&*mController, &Controller::modifiedChanged, &*mProjectManager, &ProjectManagerWrapper::setStackUnsaved);
 
 	connect(mUi->tabs, &QTabWidget::currentChanged, this, &MainWindow::changeWindowTitle);
-	connect(mTextManager, &text::TextManager::textChanged, this, &MainWindow::setTextChanged);
-	connect(mTextManager, &text::TextManager::textChanged, mUi->actionUndo, &QAction::setEnabled);
+	connect(&*mTextManager, &text::TextManager::textChanged, this, &MainWindow::setTextChanged);
+	connect(&*mTextManager, &text::TextManager::textChanged, mUi->actionUndo, &QAction::setEnabled);
 
-	connect(mProjectManager, &ProjectManager::afterOpen, mUi->paletteTree, &PaletteTree::refreshUserPalettes);
-	connect(mProjectManager, &ProjectManager::closed, mUi->paletteTree, &PaletteTree::refreshUserPalettes);
-	connect(mProjectManager, &ProjectManager::closed, mController, &Controller::projectClosed);
+	connect(&*mProjectManager, &ProjectManager::afterOpen, mUi->paletteTree, &PaletteTree::refreshUserPalettes);
+	connect(&*mProjectManager, &ProjectManager::closed, mUi->paletteTree, &PaletteTree::refreshUserPalettes);
+	connect(&*mProjectManager, &ProjectManager::closed, &*mController, &Controller::projectClosed);
 
 	connect(mUi->propertyEditor, &PropertyEditorView::shapeEditorRequested, this, static_cast<void (MainWindow::*)
 			(const QPersistentModelIndex &, int, const QString &, bool)>(&MainWindow::openShapeEditor));
@@ -363,10 +359,10 @@ void MainWindow::connectActions()
 
 void MainWindow::connectSystemEvents()
 {
-	connect(mErrorReporter, &ErrorReporter::informationAdded, &mFacade->events(), &SystemEvents::informationAdded);
-	connect(mErrorReporter, &ErrorReporter::warningAdded, &mFacade->events(), &SystemEvents::warningAdded);
-	connect(mErrorReporter, &ErrorReporter::errorAdded, &mFacade->events(), &SystemEvents::errorAdded);
-	connect(mErrorReporter, &ErrorReporter::criticalAdded, &mFacade->events(), &SystemEvents::criticalAdded);
+	connect(&*mErrorReporter, &ErrorReporter::informationAdded, &mFacade->events(), &SystemEvents::informationAdded);
+	connect(&*mErrorReporter, &ErrorReporter::warningAdded, &mFacade->events(), &SystemEvents::warningAdded);
+	connect(&*mErrorReporter, &ErrorReporter::errorAdded, &mFacade->events(), &SystemEvents::errorAdded);
+	connect(&*mErrorReporter, &ErrorReporter::criticalAdded, &mFacade->events(), &SystemEvents::criticalAdded);
 
 	connect(static_cast<QRealApplication *>(qApp), &QRealApplication::lowLevelEvent
 			, &mFacade->events(), &SystemEvents::lowLevelEvent);
@@ -397,18 +393,8 @@ QModelIndex MainWindow::rootIndex() const
 
 MainWindow::~MainWindow()
 {
-	delete mErrorReporter;
 	mUi->paletteTree->saveConfiguration();
 	SettingsManager::instance()->saveData();
-	delete mRecentProjectsMenu;
-	delete mRecentProjectsMapper;
-	delete mController;
-	delete mFindReplaceDialog;
-	delete mFindHelper;
-	delete mProjectManager;
-	delete mSceneCustomizer;
-	delete mTextManager;
-
 	// TODO: This is a workaround for crash on macOS.
 	// Seems like this crash is caused by memory corruption somewhere else.
 	// If the statusBar with children is deleted before other controls, this helps.
@@ -571,7 +557,7 @@ void MainWindow::sceneSelectionChanged()
 		mUi->graphicalModelExplorer->setCurrentIndex(QModelIndex());
 		mPropertyModel->clearModelIndexes();
 	} else if (selectedIds.length() == 1) {
-		const Id singleSelected = selectedIds.first();
+		const Id &singleSelected = selectedIds.first();
 		setIndexesOfPropertyEditor(singleSelected);
 
 		const QModelIndex index = models().graphicalModelAssistApi().indexById(singleSelected);
@@ -604,9 +590,6 @@ void MainWindow::refreshRecentProjectsList(const QString &fileName)
 
 void MainWindow::openRecentProjectsMenu()
 {
-	delete mRecentProjectsMapper;
-	mRecentProjectsMapper = new QSignalMapper;
-
 	mRecentProjectsMenu->clear();
 	const QString stringList = SettingsManager::value("recentProjects").toString();
 	QStringList recentProjects = stringList.split(";", QString::SkipEmptyParts);
@@ -616,20 +599,16 @@ void MainWindow::openRecentProjectsMenu()
 		recentProjects.pop_front();
 	}
 
-	for (QString projectPath : recentProjects) {
+	for (const QString &projectPath : recentProjects) {
 		mRecentProjectsMenu->addAction(projectPath);
 		QObject::connect(mRecentProjectsMenu->actions().last(), &QAction::triggered
-				, mRecentProjectsMapper, static_cast<void (QSignalMapper::*)()>(&QSignalMapper::map));
-		mRecentProjectsMapper->setMapping(mRecentProjectsMenu->actions().last(), projectPath);
+				, &*mProjectManager, [this, projectPath](){ mProjectManager->openExisting(projectPath);});
 	}
-	QObject::connect(mRecentProjectsMapper
-			, static_cast<void (QSignalMapper::*)(const QString &)>(&QSignalMapper::mapped)
-			, mProjectManager, &ProjectManagerWrapper::openExisting);
 }
 
 void MainWindow::tryToSave()
 {
-	if(!mProjectManager->saveOrSuggestToSaveAs()) {
+	if(!mProjectManager->saveText() && !mProjectManager->saveOrSuggestToSaveAs()) {
 		mErrorReporter->addWarning(tr("Could not save file, try to save it to another place"));
 	}
 }
@@ -744,6 +723,7 @@ void MainWindow::openTab(QWidget *tab, const QString &title)
 
 void MainWindow::closeTab(QWidget *tab)
 {
+	mUi->tabs->setCurrentWidget(tab);
 	closeTab(mUi->tabs->indexOf(tab));
 }
 
@@ -924,7 +904,6 @@ void MainWindow::closeCurrentTab()
 
 void MainWindow::closeTab(int index)
 {
-	switchToTab(index);
 	QWidget * const widget = mUi->tabs->widget(index);
 	bool isClosed = false;
 
@@ -1217,7 +1196,7 @@ void MainWindow::setShortcuts(EditorView * const tab)
 
 	// Add shortcut - select all
 	QAction *selectAction = new QAction(tab);
-	selectAction->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_A));
+	selectAction->setShortcut(QKeySequence(QKeySequence::SelectAll));
 	connect(selectAction, &QAction::triggered, scene, &EditorViewScene::selectAll);
 	tab->addAction(selectAction);
 }
@@ -1339,6 +1318,7 @@ bool MainWindow::closeTab(const QModelIndex &graphicsIndex)
 	for (int i = 0; i < mUi->tabs->count(); i++) {
 		EditorView * const tab = (dynamic_cast<EditorView *>(mUi->tabs->widget(i)));
 		if (tab && tab->mvIface().rootIndex() == graphicsIndex) {
+			mUi->tabs->setCurrentWidget(tab);
 			closeTab(i);
 			return true;
 		}
@@ -1354,7 +1334,7 @@ models::Models &MainWindow::models()
 
 Controller *MainWindow::controller() const
 {
-	return mController;
+	return &*mController;
 }
 
 PropertyEditorView *MainWindow::propertyEditor() const
@@ -1628,7 +1608,7 @@ void MainWindow::dehighlight()
 
 ErrorReporterInterface *MainWindow::errorReporter()
 {
-	return mErrorReporter;
+	return &*mErrorReporter;
 }
 
 void MainWindow::updatePaletteIcons()
@@ -2276,7 +2256,7 @@ void MainWindow::openStartTab()
 		}
 	}
 
-	mStartWidget = new StartWidget(this, mProjectManager);
+	mStartWidget = new StartWidget(this, &*mProjectManager, this);
 	const bool hadTabs = mUi->tabs->count() > 0;
 	mUi->tabs->insertTab(0, mStartWidget, tr("Getting Started"));
 	mUi->tabs->setTabUnclosable(hadTabs);

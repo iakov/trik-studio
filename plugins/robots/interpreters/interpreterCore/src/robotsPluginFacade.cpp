@@ -47,8 +47,12 @@ RobotsPluginFacade::RobotsPluginFacade()
 
 RobotsPluginFacade::~RobotsPluginFacade()
 {
-	qDeleteAll(mInterpreters.values().toSet());
-	mInterpreters.clear();
+	qDeleteAll(mInterpreters.values().toSet());	
+	for (auto &&kitId : mKitPluginManager.kitIds()) {
+		for (auto *kit : mKitPluginManager.kitsById(kitId)) {
+			kit->release();
+		}
+	}
 }
 
 void RobotsPluginFacade::init(const qReal::PluginConfigurator &configurer)
@@ -209,6 +213,8 @@ void RobotsPluginFacade::init(const qReal::PluginConfigurator &configurer)
 			, &qReal::ProjectManagementInterface::afterOpen
 			, this
 			, [=](const QString &path){
+		mLogicalModelApi->mutableLogicalRepoApi().setMetaInformation("trikStudioVersion", mCustomizer.productVersion());
+
 		auto logicalRepo = &mLogicalModelApi->logicalRepoApi();
 		const QString code = logicalRepo->metaInformation("activeCode").toString();
 		QFileInfo projectFile(mProjectManager->saveFilePath());
@@ -219,7 +225,7 @@ void RobotsPluginFacade::init(const qReal::PluginConfigurator &configurer)
 		}
 
 		QFileInfo codeDir(path);
-		QFileInfo codePath(codeDir.dir().absoluteFilePath(name + '.' + extension)); // absoluteDir?
+		QFileInfo codePath(codeDir.dir().absoluteFilePath("lastCode." + extension)); // absoluteDir?
 		bool success = false;
 		utils::OutFile out(codePath.filePath(), &success);
 		if (success) {

@@ -160,7 +160,7 @@ void TrikKitInterpreterPluginBase::startCodeInterpretation(const QString &code
 
 void TrikKitInterpreterPluginBase::handleImitationCameraWork()
 {
-	auto prepareImagesFromProject = [this](QString) {
+	auto prepareImagesFromProject = [this](const QString&) {
 		if (mCurrentlySelectedModelName.contains("trik", Qt::CaseInsensitive)
 				&& qReal::SettingsManager::value("TrikSimulatedCameraImagesFromProject").toBool()
 				&& mProjectManager->somethingOpened()) {
@@ -195,10 +195,6 @@ void TrikKitInterpreterPluginBase::handleImitationCameraWork()
 
 				dir.cd(curPath);
 			}
-		}
-
-		if (mTextualInterpreter) {
-			mTextualInterpreter->reinitRobotsParts();
 		}
 	};
 
@@ -403,6 +399,14 @@ void TrikKitInterpreterPluginBase::init(const kitBase::KitPluginConfigurator &co
 			, mTwoDRobotModel.data(), &robotModel::twoD::TrikTwoDRobotModel::rereadSettings);
 
 	handleImitationCameraWork();
+}
+
+void TrikKitInterpreterPluginBase::release()
+{
+	mTwoDModel.reset();
+	mTwoDRobotModel.reset();
+	mRealRobotModel.reset();
+	mTextualInterpreter.reset();
 }
 
 QList<kitBase::robotModel::RobotModelInterface *> TrikKitInterpreterPluginBase::robotModels()

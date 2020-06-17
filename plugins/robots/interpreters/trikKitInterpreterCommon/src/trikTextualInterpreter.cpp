@@ -57,7 +57,7 @@ const QString jsOverrides = "script.random = brick.random;script.wait = brick.wa
 	"};"
 	"script.system = function() {print('system is disabled in the interpreter');};";
 
-const QString pyOverrides ="\ndef print(args): brick.log(args);brick.log('\\n');script.wait(0);\n"
+const QString pyOverrides ="\n__import__('sys').stdout = type('trik_studio_stdout', (object,), { 'write': brick.log, 'flush': lambda: None })\n"
 			   "script.random = brick.random;"
 			   "script.wait = brick.wait;"
 			   "script.time = brick.time;"
@@ -141,11 +141,11 @@ void trik::TrikTextualInterpreter::interpretScriptExercise(const QString &script
 
 void trik::TrikTextualInterpreter::abort()
 {
-	//mScriptRunner.abort();
-	mBrick.stopWaiting();
 	Q_ASSERT(mScriptRunner.thread() == thread());
 	// just a wild test
 	QMetaObject::invokeMethod(&mScriptRunner, &trikScriptRunner::TrikScriptRunner::abort, Qt::QueuedConnection);
+	//mScriptRunner.abort();
+	mBrick.stopWaiting();
 	mRunning = false; // reset brick?
 	mBrick.processSensors(false);
 }
@@ -153,8 +153,6 @@ void trik::TrikTextualInterpreter::abort()
 void trik::TrikTextualInterpreter::init()
 {
 	mBrick.init(); // very crucial. Maybe move into interpret methods?
-	// TODO: Remove this hack after trikRuntime is fixed to support source directory changes in camera imitation
-	reinitRobotsParts();
 }
 
 void trik::TrikTextualInterpreter::setErrorReporter(qReal::ErrorReporterInterface &errorReporter)
@@ -247,11 +245,6 @@ QStringList trik::TrikTextualInterpreter::supportedRobotModelNames() const
 QStringList trik::TrikTextualInterpreter::knownMethodNames() const
 {
 	return mScriptRunner.knownMethodNames();
-}
-
-void trik::TrikTextualInterpreter::reinitRobotsParts()
-{
-	mBrick.reinitImitationCamera();
 }
 
 void trik::TrikTextualInterpreter::scriptFinished(const QString &error, int scriptId)
