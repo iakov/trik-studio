@@ -126,7 +126,7 @@ before_script:
   - export CCACHE_DIR="$HOME/.ccache/$TRAVIS_OS_NAME-$CONFIG"
 
 script:
-  - ./buildScripts/travis/script.sh & WPID=$!
+  - $EXECUTOR ./buildScripts/travis/script.sh & WPID=$!
   - sleep $BUILD_TIMEOUT && { kill $WPID || true ; echo "***KILLED ON TIMEOUT***" ; } & KPID=$!
   - export TIMEOUT=false
   - wait $WPID ; RES=$?; kill -0 $KPID && kill $KPID > /dev/null || export TIMEOUT=true ; ( exit $RES )
