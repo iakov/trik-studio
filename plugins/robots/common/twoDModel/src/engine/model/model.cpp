@@ -58,14 +58,18 @@ void Model::init(qReal::ErrorReporterInterface &errorReporter
 		// Stopping cannot be performed immediately because we still have constraints to check in event loop
 		// and they need scene to be alive (in checker stopping interpretation means deleting all).
 		QTimer::singleShot(0, &interpreterControl,
-				[&interpreterControl](){ Q_EMIT interpreterControl.stopAllInterpretation(); });
+				[&interpreterControl](){
+				Q_EMIT interpreterControl.stopAllInterpretation(qReal::interpretation::StopReason::finised);
+		});
 	});
 	connect(mChecker.data(), &constraints::ConstraintsChecker::fail, this, [&](const QString &message) {
 		errorReporter.addError(message);
 		// Stopping cannot be performed immediately because we still have constraints to check in event loop
 		// and they need scene to be alive (in checker stopping interpretation means deleting all).
 		QTimer::singleShot(0, &interpreterControl,
-				[&interpreterControl](){ Q_EMIT interpreterControl.stopAllInterpretation(); });
+				[&interpreterControl](){
+				Q_EMIT interpreterControl.stopAllInterpretation(qReal::interpretation::StopReason::error);
+		});
 	});
 	connect(mChecker.data(), &constraints::ConstraintsChecker::checkerError
 			, this, [&errorReporter](const QString &message) {
@@ -215,7 +219,8 @@ void Model::addRobotModel(robotModel::TwoDRobotModel &robotModel, const QPointF 
 
 	connect(&mTimeline, &Timeline::tick, robot, &RobotModel::recalculateParams);
 	connect(&mTimeline, &Timeline::nextFrame, robot, &RobotModel::nextFragment);
-	connect(&mTimeline, &Timeline::nextFrame, mRealisticPhysicsEngine, &physics::PhysicsEngineBase::nextFrame);
+	connect(&mTimeline, &Timeline::nextFrame
+			, mRealisticPhysicsEngine, &physics::PhysicsEngineBase::nextFrame, Qt::UniqueConnection);
 
 	robot->setPhysicalEngine(mSettings.realisticPhysics() ? *mRealisticPhysicsEngine : *mSimplePhysicsEngine);
 
@@ -293,7 +298,8 @@ void Model::initPhysics()
 	connect(this, &model::Model::robotRemoved, mSimplePhysicsEngine, &physics::PhysicsEngineBase::removeRobot);
 
 	connect(&mTimeline, &Timeline::tick, this, &Model::recalculatePhysicsParams);
-	connect(&mTimeline, &Timeline::nextFrame, mRealisticPhysicsEngine, &physics::PhysicsEngineBase::nextFrame);
+	connect(&mTimeline, &Timeline::nextFrame
+			, mRealisticPhysicsEngine, &physics::PhysicsEngineBase::nextFrame, Qt::UniqueConnection);
 }
 
 void Model::recalculatePhysicsParams()

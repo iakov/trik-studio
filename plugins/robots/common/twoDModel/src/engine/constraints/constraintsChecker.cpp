@@ -290,6 +290,9 @@ void ConstraintsChecker::programStarted()
 void ConstraintsChecker::programFinished(qReal::interpretation::StopReason reason)
 {
 	if (!mSuccessTriggered && !mFailTriggered && mEnabled) {
+		if (reason == qReal::interpretation::StopReason::userStop) {
+			qDebug() << "Here";
+		}
 		if (mDefferedSuccessTriggered && reason == qReal::interpretation::StopReason::finised) {
 			emit success();
 		} else {

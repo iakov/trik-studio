@@ -217,7 +217,7 @@ void BlockInterpreter::addThread(const QSharedPointer<qReal::interpretation::Thr
 	connect(&*thread, &qReal::interpretation::Thread::killThread, this, &BlockInterpreter::killThread);
 	connect(&*thread, &qReal::interpretation::Thread::sendMessage, this, &BlockInterpreter::sendMessage);
 
-	QCoreApplication::processEvents();
+	QCoreApplication::sendPostedEvents();
 	if (mState != idle) {
 		thread->interpret();
 	}

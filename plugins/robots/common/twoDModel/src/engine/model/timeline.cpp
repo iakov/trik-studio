@@ -15,7 +15,7 @@
 #include <QtCore/QCoreApplication>
 #include <QtCore/QDateTime>
 #include <QThread>
-
+#include <QDebug>
 #include "twoDModel/engine/model/timeline.h"
 #include "modelTimer.h"
 
@@ -23,10 +23,6 @@ using namespace twoDModel::model;
 
 Timeline::Timeline(QObject *parent)
 	: QObject(parent)
-	, mSpeedFactor(normalSpeedFactor)
-	, mCyclesCount(0)
-	, mIsStarted(false)
-	, mTimestamp(0)
 {
 	static volatile auto registered = false;
 	if (!registered) {
@@ -36,13 +32,23 @@ Timeline::Timeline(QObject *parent)
 	}
 
 	connect(&mTimer, &QTimer::timeout, this, &Timeline::onTimer);
-	mTimer.setInterval(defaultRealTimeInterval);
+	mTimer.setInterval(0);
 }
+
+Timeline::~Timeline()
+{
+	stop(qReal::interpretation::StopReason::error);
+}
+
+static int gTicks  = 0;
+static int gFrames = 0;
+static qint64 gStart = 0;
 
 void Timeline::start()
 {
 	if (!mIsStarted) {
 		mIsStarted = true;
+		gStart = QDateTime::currentMSecsSinceEpoch();
 		emit started();
 		emit tick(); /// hack so that constraints init-on would start immediatly
 		/// ideally they should be triggered on started()
@@ -54,7 +60,6 @@ void Timeline::stop(qReal::interpretation::StopReason reason)
 {
 	if (mIsStarted) {
 		mIsStarted = false;
-		QCoreApplication::processEvents();
 		emit beforeStop(reason);
 		mTimer.stop();
 		emit stopped(reason);
@@ -69,33 +74,33 @@ void Timeline::onTimer()
 	}
 
 	for (int i = 0; i < ticksPerCycle; ++i) {
-		QCoreApplication::processEvents();
+		QCoreApplication::sendPostedEvents();
 		if (mIsStarted) {
 			mTimestamp += timeInterval;
+			++gTicks;
 			emit tick();
 			++mCyclesCount;
 			if (mCyclesCount >= mSpeedFactor) {
 				mTimer.stop();
 				mCyclesCount = 0;
-				const int msFromFrameStart = static_cast<int>(QDateTime::currentMSecsSinceEpoch()
+				auto msFromFrameStart = static_cast<int>(QDateTime::currentMSecsSinceEpoch()
 						- mFrameStartTimestamp);
-				const int pauseBeforeFrameEnd = mFrameLength - msFromFrameStart;
-				if (pauseBeforeFrameEnd > 0) {
-					QTimer::singleShot(pauseBeforeFrameEnd - 1, this, &Timeline::gotoNextFrame);
-				} else {
-					gotoNextFrame();
-				}
-
+				auto pauseBeforeFrameEnd = mFrameLength - msFromFrameStart - 1;
+				QTimer::singleShot(std::max(pauseBeforeFrameEnd, 0), this, &Timeline::gotoNextFrame);
 				return;
 			}
 		}
 	}
 }
-
 void Timeline::gotoNextFrame()
 {
-	emit nextFrame();
 	mFrameStartTimestamp = QDateTime::currentMSecsSinceEpoch();
+	++gFrames;
+	if (0 == gFrames % 100) {
+		auto FPS =  1000 * gFrames / (mFrameStartTimestamp - gStart + 1);
+		qDebug() << "Frames:" << gFrames << "; Ticks:" << gTicks << "; FPS:" << FPS;
+	}
+	emit nextFrame();
 	if (!mTimer.isActive()) {
 		mTimer.start();
 	}
@@ -128,8 +133,6 @@ utils::AbstractTimer *Timeline::produceTimer()
 
 void Timeline::setImmediateMode(bool immediateMode)
 {
-	mTimer.setInterval(immediateMode ? 0 : defaultRealTimeInterval);
-	setSpeedFactor(immediateMode ? immediateSpeedFactor : normalSpeedFactor);
 	mFrameLength = immediateMode ? 0 : defaultFrameLength;
 }
 

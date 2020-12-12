@@ -117,7 +117,7 @@ int main(int argc, char *argv[])
 	QCommandLineOption speedOption({"s", "speed"}
 								   , QObject::tr("Speed factor, try from 5 to 20, or even 1000 (at your own risk!).")
 								   , "speed", "0");
-	QCommandLineOption closeOnSuccessOption("close-on-succes"
+	QCommandLineOption exitOnSuccessOption({"x", "exit"}
 								   , QObject::tr("Close the window and exit if the diagram/script"\
 												 " finishes without errors."));
 	QCommandLineOption showConsoleOption({"c", "console"}, QObject::tr("Shows robot's console."));
@@ -127,7 +127,7 @@ int main(int argc, char *argv[])
 	parser.addOption(inputOption);
 	parser.addOption(modeOption);
 	parser.addOption(speedOption);
-	parser.addOption(closeOnSuccessOption);
+	parser.addOption(exitOnSuccessOption);
 	parser.addOption(showConsoleOption);
 
 	parser.process(*app);
@@ -143,12 +143,12 @@ int main(int argc, char *argv[])
 	const QString trajectory = parser.isSet(trajectoryOption) ? parser.value(trajectoryOption) : QString();
 	const QString input = parser.isSet(inputOption) ? parser.value(inputOption) : QString();
 	const QString mode = parser.isSet(modeOption) ? parser.value(modeOption) : QString("diagram");
-	const bool closeOnSuccessMode = parser.isSet(closeOnSuccessOption);
+	const bool exitOnSuccessMode = parser.isSet(exitOnSuccessOption);
 	const bool showConsoleMode = parser.isSet(showConsoleOption);
 	QScopedPointer<twoDModel::Runner> runner(new twoDModel::Runner(report, trajectory, input, mode));
 
 	auto speedFactor = parser.value(speedOption).toInt();
-	if (!runner->interpret(qrsFile, backgroundMode, speedFactor, closeOnSuccessMode, showConsoleMode)) {
+	if (!runner->interpret(qrsFile, backgroundMode, speedFactor, exitOnSuccessMode, showConsoleMode)) {
 		return 2;
 	}
 

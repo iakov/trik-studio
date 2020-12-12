@@ -117,7 +117,7 @@ void Interpreter::addThread(Thread * const thread, const QString &threadId)
 	connect(thread, &Thread::killThread, this, &Interpreter::killThread);
 	connect(thread, &Thread::sendMessage, this, &Interpreter::sendMessage);
 
-	QCoreApplication::processEvents();
+	QCoreApplication::sendPostedEvents();
 	if (mState != idle) {
 		thread->interpret();
 	}

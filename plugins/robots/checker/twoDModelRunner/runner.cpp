@@ -91,8 +91,11 @@ bool Runner::interpret(const QString &saveFile, const bool background
 
 	connect(&mPluginFacade.eventsForKitPlugins(), &kitBase::EventsForKitPluginInterface::interpretationStopped
 			, this, [this, background, closeOnSuccess](qReal::interpretation::StopReason reason) {
-		if (background || (closeOnSuccess && reason == qReal::interpretation::StopReason::finised))
+		if (background || (closeOnSuccess && reason == qReal::interpretation::StopReason::finised)) {
 			QTimer::singleShot(0, this, &Runner::close);
+		} else {
+			qDebug() << reason;
+		}
 	});
 
 	for (auto &&twoDModelWindow : twoDModelWindows) {

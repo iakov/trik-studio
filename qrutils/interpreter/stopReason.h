@@ -27,8 +27,9 @@ enum class StopReason
 	/// User stopped program execution (explicitly or implicitly)
 	, userStop
 };
-
+Q_NAMESPACE
+Q_ENUM_NS(StopReason)
 }
 }
 
-Q_DECLARE_METATYPE(qReal::interpretation::StopReason)
+//Q_DECLARE_METATYPE(qReal::interpretation::StopReason)

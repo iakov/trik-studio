@@ -36,9 +36,9 @@ public:
 	static const int defaultFrameLength = 1000 / fps;
 
 	static const int normalSpeedFactor = 5;
-	static const int immediateSpeedFactor = 100000000;
 
 	explicit Timeline(QObject *parent = nullptr);
+	~Timeline();
 
 	int speedFactor() const;
 
@@ -84,16 +84,15 @@ private slots:
 	utils::AbstractTimer *produceTimerImpl();
 
 private:
-	static const int defaultRealTimeInterval = 0;
 	static const int ticksPerCycle = 3;
 
 	QTimer mTimer;
-	int mSpeedFactor;
-	int mCyclesCount;
+	int mSpeedFactor { normalSpeedFactor };
+	int mCyclesCount {};
 	qint64 mFrameStartTimestamp {};
-	bool mIsStarted;
-	quint64 mTimestamp;
-	int mFrameLength = defaultFrameLength;
+	QAtomicInt mIsStarted {};
+	quint64 mTimestamp {};
+	int mFrameLength { defaultFrameLength };
 };
 
 }
