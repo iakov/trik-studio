@@ -34,5 +34,16 @@
         <file>icons/junior_robots/Owl.svg</file>
         <file>icons/junior_robots/Tank.svg</file>
         <file>icons/junior_robots/Truck.svg</file>
+        <file>icons/junior_robots/trik-robot.svg</file>
+        <file>icons/junior_robots/Исполнитель - дракон.svg</file>
+        <file>icons/junior_robots/Исполнитель - Колобок 1.png</file>
+        <file>icons/junior_robots/Исполнитель - Колобок 2.svg</file>
+        <file>icons/junior_robots/Исполнитель - лодка.svg</file>
+        <file>icons/junior_robots/Исполнитель - робот-пылесос.jpg</file>
+        <file>icons/junior_robots/Исполнитель - робот-пылесос.png</file>
+        <file>icons/junior_robots/ИсполнительТРИК - кот.svg</file>
+        <file>icons/junior_robots/ИсполнительТРИК - лифт.svg</file>
+        <file>icons/junior_robots/ИсполнительТРИК - робот.svg</file>
+        <file>icons/junior_robots/ИсполнительТРИК - черепашка.svg</file>
     </qresource>
 </RCC>
