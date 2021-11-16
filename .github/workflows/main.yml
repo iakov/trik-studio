@@ -58,7 +58,24 @@ jobs:
         uses: n1hility/cancel-previous-runs@v2.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set locale and codepage for QMake to workaround QTBUG-27896
+        shell: bash
+        run: |
+            echo "LC_ALL=ru_RU.CP1251" >> $GITHUB_ENV
+            cat << EOF >> $HOME/cp1251.reg
+            Windows Registry Editor Version 5.00
 
+            [HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Nls\CodePage]
+            "OEMCP"="1251"
+
+            [-HKEY_CURRENT_USER\Console\%SystemRoot%_system32_cmd.exe]
+
+            [HKEY_CURRENT_USER\Console]
+            "CodePage"=dword:000004e3
+
+            EOF
+            cd $HOME && reg import cp1251.reg
+            
       - name: Setup msys2
         uses: msys2/setup-msys2@v2
         with:
@@ -85,8 +102,7 @@ jobs:
         shell: bash
         run: |
             DIR=$(realpath $(cygpath -u "$GITHUB_WORKSPACE")/../build)
-            echo "BUILD_DIR=$DIR" >> $GITHUB_ENV
-            echo "LC_CTYPE=ru_RU.CP1251" >> $GITHUB_ENV
+            echo "BUILD_DIR=$DIR" >> $GITHUB_ENV            
 
       - name: Create build directory
         run: mkdir -vp ${{ env.BUILD_DIR }}
@@ -157,6 +173,7 @@ jobs:
         run: |
             cd ${{ env.BUILD_DIR }}
             mingw32-make -j $(nproc) qmake_all
+            cat plugins/robots/interpreters/trikKitInterpreterCommon/Makefile
 
       - name: Make all
         timeout-minutes: 90
