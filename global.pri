@@ -288,7 +288,7 @@ defineTest(copyToDestdir) {
 
 		win32 {
 			# probably, xcopy needs /s and /e for directories
-			COPY_DIR = "cmd.exe /C xcopy /y /i /s /e "
+			COPY_DIR = "cmd.exe /U /C xcopy /y /i /s /e "
 			!silent: COPY_DIR += /f
 		} else {
 			COPY_DIR = rsync -a

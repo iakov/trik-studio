@@ -86,6 +86,7 @@ jobs:
         run: |
             DIR=$(realpath $(cygpath -u "$GITHUB_WORKSPACE")/../build)
             echo "BUILD_DIR=$DIR" >> $GITHUB_ENV
+            echo "LC_CTYPE=ru_RU.CP1251" >> $GITHUB_ENV
 
       - name: Create build directory
         run: mkdir -vp ${{ env.BUILD_DIR }}
@@ -95,6 +96,7 @@ jobs:
         run: |
             git config --global core.symlinks true
             git config --global core.autocrlf true
+            git config --global core.quotePath false
 
       - name: Install Qt
         uses: jurplel/install-qt-action@v2
@@ -103,7 +105,7 @@ jobs:
           version: ${{matrix.qt-version}}
           arch: win32_mingw${{matrix.mingw-short-version}}
           modules: 'qtscript'
-          tools: 'tools_ifw,4.1.1,qt.tools.ifw.41 tools_mingw,${{matrix.mingw-version}}.0,qt.tools.win32_mingw${{matrix.mingw-short-version}}0'
+          tools: 'tools_ifw,4.2,qt.tools.ifw.42 tools_mingw,${{matrix.mingw-version}}.0,qt.tools.win32_mingw${{matrix.mingw-short-version}}0'
           extra: '--external 7z'
 
 # After Qt install action, that spoils pythonLocation variable
@@ -132,13 +134,17 @@ jobs:
       - name: Check available tools
         run: |
              set -xueo pipefail
-             uname -a
-             rsync --version
-             ls "$IQTA_TOOLS/" "$Qt5_Dir/"
-             qmake --version && qmake -query
-             python3 --version
-             which g++
-             g++ --version
+             test() { echo $@ ; eval "$@" ; }
+             test uname -a
+             test rsync --version
+             test ls "$IQTA_TOOLS/" "$Qt5_Dir/"
+             test "make --version || :"
+             test "mingw32-make --version || :"
+             test qmake --version && qmake -query
+             test python3 --version
+             test which g++
+             test g++ --version
+             test locale
 
       - name: QMake
         timeout-minutes: 1
