@@ -59,6 +59,13 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
       - name: Set locale and codepage for QMake to workaround QTBUG-27896
+        shell: powershell
+        run: |
+            Get-WinSystemLocale
+            Set-WinSystemLocale ru-RU
+            Get-WinSystemLocale
+
+      - name: Set locale and codepage for QMake to workaround QTBUG-27896
         shell: bash
         run: |
             echo "LC_ALL=ru_RU.CP1251" >> $GITHUB_ENV
