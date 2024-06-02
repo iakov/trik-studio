@@ -24,6 +24,7 @@
 #include <twoDModel/robotModel/twoDRobotModel.h>
 
 #include <qrgui/textEditor/qscintillaTextEdit.h>
+#include <qrgui/textEditor/textManagerInterface.h>
 
 #include "interpreterCore/managers/kitAutoSwitcher.h"
 #include "interpreterCore/interpreter/blockInterpreter.h"
@@ -400,7 +401,7 @@ void RobotsPluginFacade::initSensorWidgets()
 		if (!dynamic_cast<qReal::text::QScintillaTextEdit *>(mMainWindow->currentTab())) {
 			// since userStop fires on any tab/model switch even when the code tab is opened
 			// and nothing is running, but this whole visibility mumbo-jumbo has become a mess
-			mActionsManager.runAction().setVisible(mRobotModelManager.model().interpretedModel());
+			mActionsManager.setRunActionVisible(mRobotModelManager.model().interpretedModel());
 			mActionsManager.stopRobotAction().setVisible(false);
 		}
 	});

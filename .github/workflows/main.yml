@@ -25,6 +25,7 @@ on:
       - '**/Dockerfile'
       - '**/Dockerfile.*'
       - 'plugins/robots/checker/scripts/build-checker-installer.sh'
+      - '.github/workflows/centos.yml'
   pull_request:
     branches-ignore:
       - 'dependabot**'
@@ -37,7 +38,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - qt-version: '5.12.12'
+          - qt-version: '5.12'
             mingw-version: 7.3
             mingw-short-version: 73
             python-version: 3.8
@@ -55,7 +56,7 @@ jobs:
     steps:
 
       - name: Cancel Previous Workflow Runs
-        uses: n1hility/cancel-previous-runs@v2.0
+        uses: n1hility/cancel-previous-runs@v3.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -69,14 +70,7 @@ jobs:
         run: |
             ARCH=32
             PLATFORM=i686
-            pacman --verbose --noconfirm -S msys/zlib-devel dos2unix ccache rsync unzip sshpass mingw$ARCH/mingw-w64-$PLATFORM-libzip mingw$ARCH/mingw-w64-$PLATFORM-libusb mingw$ARCH/mingw-w64-$PLATFORM-zlib mingw$ARCH/mingw-w64-$PLATFORM-pkg-config
-
-# https://github.com/msys2/MSYS2-packages/issues/2485 - sshpass failed with strange error
-      - name: Get older sshpass
-        run: |
-            wget http://repo.msys2.org/msys/x86_64/sshpass-1.06-1-x86_64.pkg.tar.xz
-            pacman --verbose --noconfirm -U ./sshpass-1.06-1-x86_64.pkg.tar.xz
-            rm ./sshpass-1.06-1-x86_64.pkg.tar.xz
+            pacman --verbose --noconfirm -S msys/zlib-devel dos2unix ccache rsync unzip openssh mingw$ARCH/mingw-w64-$PLATFORM-libzip mingw$ARCH/mingw-w64-$PLATFORM-libusb mingw$ARCH/mingw-w64-$PLATFORM-zlib mingw$ARCH/mingw-w64-$PLATFORM-pkg-config
 
       - name: Inject slug/short variables
         uses: rlespinasse/github-slug-action@v3.x
@@ -97,13 +91,14 @@ jobs:
             git config --global core.autocrlf true
 
       - name: Install Qt
-        uses: jurplel/install-qt-action@v2
+        uses: jurplel/install-qt-action@v3
         with:
           dir: C:\
-          version: ${{matrix.qt-version}}
+          version: '${{matrix.qt-version}}.*'
           arch: win32_mingw${{matrix.mingw-short-version}}
           modules: 'qtscript'
-          tools: 'tools_mingw,${{matrix.mingw-version}}.0,qt.tools.win32_mingw${{matrix.mingw-short-version}}0'
+          archives: 'qtbase qtmultimedia qtsvg qtscript qttools qtserialport qtimageformats qtwinextras'
+          tools: 'tools_mingw,qt.tools.win32_mingw${{matrix.mingw-short-version}}0'
           extra: '--external 7z'
 
       - name: Checkout repository
@@ -172,6 +167,7 @@ jobs:
         timeout-minutes: 5
         run: |
             cd ${{ env.BUILD_DIR }}
+            export TRIK_PYTHONPATH=$(cygpath -w "${pythonLocation}/Lib")
             mingw32-make -k check
 
       - name: Prepare all dlls
@@ -230,7 +226,10 @@ jobs:
 
       - name: Deploy installer
         if: ${{ matrix.deploy-installer && github.event_name != 'pull_request' && github.repository_owner == 'trikset' }}
-        run: sshpass -p ${{ secrets.DL_PASSWORD }} rsync -ve "ssh -o StrictHostKeyChecking=no" installer/trik-studio*installer*.exe ${{ secrets.DL_USERNAME }}@${{ secrets.DL_HOST }}:~/dl/ts/fresh/installer/trik-studio-${{ env.GITHUB_REF_SLUG }}-i686-installer.exe
+        run: |
+            install -m 600 -D /dev/null ~/.ssh/id_rsa
+            echo "${{ secrets.DL_PRIVATE_SSH_KEY }}" > ~/.ssh/id_rsa
+            rsync -v --rsh="ssh -o StrictHostKeyChecking=no" installer/trik-studio*installer*.exe ${{ secrets.DL_USERNAME }}@${{ secrets.DL_HOST }}:~/dl/ts/fresh/installer/trik-studio-${{ env.GITHUB_REF_SLUG }}-i686-installer.exe
 
       - name: Prepare for RDP connection
         if: false #comment this line to create RDP session

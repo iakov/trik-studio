@@ -3,25 +3,29 @@ set -o nounset
 set -o errexit
 
 cd "$(dirname "$0")"
-source $INSTALLER_ROOT/utils/mac_utils.sh
+source "$INSTALLER_ROOT"/utils/mac_utils.sh
 
 mkdir -p "$BUNDLE_CONTENTS/Lib/python-runtime"
 mkdir -p "$BUNDLE_CONTENTS/Lib/plugins/editors"
 
-cp -p  -f   $BIN_DIR/plugins/editors/libtrikMetamodel.dylib                                "$BUNDLE_CONTENTS/Lib/plugins/editors/"
-cp -fpR $BIN_DIR/librobots-trik-qts-generator-library*.dylib                           "$BUNDLE_CONTENTS/Lib"
-cp -fpR $BIN_DIR/librobots-trik-generator-base*.dylib                                  "$BUNDLE_CONTENTS/Lib"
-cp -fpR $BIN_DIR/librobots-trik-kit*.dylib                                             "$BUNDLE_CONTENTS/Lib"
-cp -fpR $BIN_DIR/librobots-trik-kit-interpreter-common*.dylib                          "$BUNDLE_CONTENTS/Lib"
-cp -fpR $BIN_DIR/libtrik*.dylib                                            	          "$BUNDLE_CONTENTS/Lib"
+rsync -a "$BIN_DIR"/plugins/editors/libtrikMetamodel.dylib                                "$BUNDLE_CONTENTS/Lib/plugins/editors/"
+rsync -a "$BIN_DIR"/librobots-trik-qts-generator-library*.dylib                           "$BUNDLE_CONTENTS/Lib"
+rsync -a "$BIN_DIR"/librobots-trik-generator-base*.dylib                                  "$BUNDLE_CONTENTS/Lib"
+rsync -a "$BIN_DIR"/librobots-trik-kit*.dylib                                             "$BUNDLE_CONTENTS/Lib"
+rsync -a "$BIN_DIR"/librobots-trik-kit-interpreter-common*.dylib                          "$BUNDLE_CONTENTS/Lib"
+rsync -a "$BIN_DIR"/libtrik*.dylib                                            	          "$BUNDLE_CONTENTS/Lib"
 
 mkdir -p "$BUNDLE_CONTENTS/MacOS"
-cp -pR "$BIN_DIR"/{system.js,TRIK.py}	                                                "$PWD/../data/"
-cp -fpR "$BIN_DIR"/{2D-model,checkapp}                                                  "$BUNDLE_CONTENTS/MacOS/"
+rsync -a "$BIN_DIR"/{system.js,TRIK.py}	                                                "$PWD/../data/"
+rsync -a "$BIN_DIR"/{2D-model,checkapp}                                                  "$BUNDLE_CONTENTS/MacOS/"
 
-[ -r venv/bin/activate ] || python3.${TRIK_PYTHON3_VERSION_MINOR} -m venv venv
+copy_qt_lib QtSerialPort
+
+
+[ -r venv/bin/activate ] || python3."${TRIK_PYTHON3_VERSION_MINOR}" -m venv venv
 . venv/bin/activate
-python3 -m pip install pyinstaller
+python3 -m pip install -U pip
+python3 -m pip install pyinstaller numpy
 
 #PyInstaller provides all required modules
 #So we need to handle this garbage of files later (below) with proper rsync
@@ -32,16 +36,22 @@ pyinstaller --clean --noconfirm --log-level DEBUG --debug noarchive --onedir --n
 	--hidden-import=time \
 	--hidden-import=os \
 	--hidden-import=types \
-	$BIN_DIR/TRIK.py
+	--hidden-import=pip \
+	--hidden-import=venv \
+	--hidden-import=site \
+	--hidden-import=numpy \
+	"$BIN_DIR"/TRIK.py
 
-rsync -avR --remove-source-files dist/trik/./{*.dylib,Python} "$BUNDLE_CONTENTS/Lib"
+deactivate # exit python's venv
+
+rsync -avR --remove-source-files dist/trik/_internal/./{*.dylib,Python} "$BUNDLE_CONTENTS/Lib"
 # Remove before copying other files
 rm dist/trik/trik
-rsync -avRm --delete --delete-after dist/trik/./* "$BUNDLE_CONTENTS/Lib/python-runtime"
+rsync -avRm --delete --delete-after dist/trik/_internal/./* "$BUNDLE_CONTENTS/Lib/python-runtime"
 
 #Add Python runtime libraries
-PYTHON_LIBNAME=$(python3.${TRIK_PYTHON3_VERSION_MINOR}-config --prefix)/Python
-#cp -fpR "$PYTHON_LIBNAME" "$BUNDLE_CONTENTS/Lib"
+PYTHON_LIBNAME=$("python3.${TRIK_PYTHON3_VERSION_MINOR}-config" --prefix)/Python
+#rsync -a "$PYTHON_LIBNAME" "$BUNDLE_CONTENTS/Lib"
 find "$BUNDLE_CONTENTS/Lib" -type f -name '*.dylib' -print0 | xargs -0n1 install_name_tool -change "$PYTHON_LIBNAME" @rpath/../Lib/Python
 
 fix_qreal_dependencies "$BUNDLE_CONTENTS/Lib/plugins/editors/libtrikMetamodel.dylib"

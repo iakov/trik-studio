@@ -13,6 +13,11 @@
 # limitations under the License.
 
 QT += widgets network script xml multimedia
+CONFIG += trikqscintilla2
+
+trik_nopython {
+    DEFINES += TRIK_NOPYTHON
+}
 
 includes( \
 		plugins/robots/common/kitBase \
@@ -27,7 +32,7 @@ includes( \
 		plugins/robots/thirdparty/trikRuntime/trikRuntime/trikScriptRunner \
 		)
 
-links(qrkernel qrutils qrtext qrgui-preferences-dialog qrgui-tool-plugin-interface qscintilla2 \
+links(qrkernel qrutils qrtext qrgui-preferences-dialog qrgui-tool-plugin-interface \
                 robots-utils robots-kit-base robots-2d-model robots-trik-kit \
                 trikControl trikNetwork trikScriptRunner trikKernel qrgui-text-editor \
 		)
