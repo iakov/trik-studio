@@ -9,7 +9,6 @@ rsync -a "$BIN_DIR"/robots-trik-qts-generator-library.dll                       
 rsync -a "$BIN_DIR"/robots-trik-generator-base.dll                                     "$PWD"/../data/
 rsync -a "$BIN_DIR"/robots-trik-kit.dll                                                "$PWD"/../data/
 rsync -a "$BIN_DIR"/robots-trik-kit-interpreter-common.dll                             "$PWD"/../data/
-
 rsync -a "$BIN_DIR"/trikPythonQt*.dll                                                "$PWD"/../data/
 rsync -a "$BIN_DIR"/trikControl.dll                                                    "$PWD"/../data/
 rsync -a "$BIN_DIR"/trikScriptRunner.dll                                               "$PWD"/../data/
