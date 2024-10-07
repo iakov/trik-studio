@@ -27,7 +27,7 @@ on:
       trik-python3-version-minor:
         required: false
         type: string
-        default: '9'
+        default: '10'
       qtifw-version:
         required: false
         type: string
