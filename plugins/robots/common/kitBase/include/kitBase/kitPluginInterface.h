@@ -41,18 +41,14 @@ public:
 
 	virtual ~KitPluginInterface() = default;
 
+public Q_SLOTS:
 	/// Passes to kit plugin objects that allow it to communicate with engine.
-	virtual void init(const KitPluginConfigurator &configurator)
-	{
-		Q_UNUSED(configurator)
-	}
+	virtual void init(const KitPluginConfigurator &configurator) = 0;
 
 	/// Releases all resources
-	virtual void release()
-	{
-	}
+	virtual void release() = 0;
 
-
+public:
 	/// An identifier of constructor kit. Kit plugins with same kitId are automaticly grouped
 	/// together extending each other.
 	virtual QString kitId() const = 0;

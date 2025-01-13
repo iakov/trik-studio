@@ -13,20 +13,23 @@
  * limitations under the License. */
 
 #pragma once
+#include <QtCore/QThread>
 
-#include "ids.h"
-#include "roles.h"
 
-namespace qReal {
+/// This class performs win8 drag manager hack for workaround of
+/// https://github.com/qreal/qreal/issues/1014
+class HackTouchDragThread : public QThread
+{
+	Q_OBJECT
+public:
+	explicit HackTouchDragThread(QObject *parent = nullptr);
 
-/// Separator used in situations where there is need to form path consisting of multiple Ids.
-const char ID_PATH_DIVIDER = '#';
+	static void simulateSystemPress();
+	static void simulateSystemMove();
+	static void simulateSystemRelease();
 
-/// MIME type for drag-and-drop operations inside QReal
-const char DEFAULT_MIME_TYPE [] = "application/x-real-uml-data";
+protected:
+	virtual void run();
+};
 
-#ifndef qUtf8Printable
-# define qUtf8Printable(string) (QString(string).toUtf8().constData())
-#endif
 
-}

@@ -922,7 +922,7 @@ void MainWindow::closeTab(int index)
 			isClosed = mProjectManager->suggestToSaveChangesOrCancel();
 		} else if (diagramId.type() == qReal::Id("RobotsMetamodel", "RobotsDiagram", "SubprogramDiagram")) {
 			if (mController->isUnsaved(diagramId.toString())) {
-				mProjectManager->setUnsavedIndicator(true);
+				Q_EMIT mProjectManager->setUnsavedIndicator(true);
 			}
 			isClosed = true;
 		}

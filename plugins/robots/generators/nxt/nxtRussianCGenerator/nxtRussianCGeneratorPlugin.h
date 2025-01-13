@@ -15,6 +15,7 @@
 #pragma once
 
 #include <nxtGeneratorBase/nxtGeneratorPluginBase.h>
+#include <QtCore/QPointer>
 
 namespace nxt {
 namespace russianC {
@@ -27,6 +28,7 @@ class NxtRussianCGeneratorPlugin : public NxtGeneratorPluginBase
 
 public:
 	NxtRussianCGeneratorPlugin();
+	virtual ~NxtRussianCGeneratorPlugin() override = default;
 
 	QList<qReal::ActionInfo> customActions() override;
 	QList<qReal::HotKeyActionInfo> hotKeyActions() override;

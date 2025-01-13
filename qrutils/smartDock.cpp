@@ -26,18 +26,50 @@
 #include <qrutils/widgets/qRealDialog.h>
 #include <qrgui/plugins/toolPluginInterface/usedInterfaces/editorInterface.h>
 
+#include "closeButtonVisibilityFilter.h"
+
 using namespace utils;
 
 SmartDock::SmartDock(const QString &objectName, QWidget *innerWidget, QMainWindow *parent)
-	: mMainWindow(parent ? parent : findMainWindow())
+	: QDockWidget(innerWidget->windowTitle(), parent)
+	, mMainWindow(parent)
 	, mInnerWidget(innerWidget)
 	, mDialog(new QRealDialog(objectName, this))
 	, mCurrentMode(Mode::Docked)
 {
-	setParent(mMainWindow);
+	if (!mMainWindow) {
+		mMainWindow = findMainWindow();
+		setParent(mMainWindow);
+	}
+
 	setObjectName(objectName);
-	initDock();
-	initDialog();
+
+	if (!mMainWindow) {
+		qFatal("Missing mMainWindow, cannot set parent");
+		return;
+	}
+
+	setWidget(mInnerWidget);
+	connect(this, &QDockWidget::topLevelChanged, this, &SmartDock::checkFloating);
+	connect(this, &QDockWidget::dockLocationChanged, this, &SmartDock::checkCentralWidget);
+
+	// Initialize internal dialog
+	mDialog->setWindowTitle(mInnerWidget->windowTitle());
+	mDialog->setWindowIcon(mInnerWidget->windowIcon());
+	mDialog->setWindowFlags(mDialog->windowFlags() | Qt::WindowMinMaxButtonsHint);
+	QVBoxLayout * const layout = new QVBoxLayout;
+	layout->setMargin(0);
+	layout->setSpacing(0);
+	layout->setContentsMargins(0, 0, 0, 0);
+	mDialog->setLayout(layout);
+	mDialog->setVisible(false);
+	connect(mDialog, &QDialog::finished, this, [=]() {
+		if (mMainWindow) {
+			switchToDocked();
+		} else {
+			mInnerWidget->close();
+		}
+	});
 }
 
 bool SmartDock::isCentral() const
@@ -219,39 +251,7 @@ bool SmartDock::event(QEvent *event)
 	return QDockWidget::event(event);
 }
 
-void SmartDock::initDock()
-{
-	if (!mMainWindow) {
-		return;
-	}
-
-	setWindowTitle(mInnerWidget->windowTitle());
-	setWidget(mInnerWidget);
-	connect(this, &QDockWidget::topLevelChanged, this, &SmartDock::checkFloating);
-	connect(this, &QDockWidget::dockLocationChanged, this, &SmartDock::checkCentralWidget);
-}
-
-void SmartDock::initDialog()
-{
-	mDialog->setWindowTitle(mInnerWidget->windowTitle());
-	mDialog->setWindowIcon(mInnerWidget->windowIcon());
-	mDialog->setWindowFlags(mDialog->windowFlags() | Qt::WindowMinMaxButtonsHint);
-	QVBoxLayout * const layout = new QVBoxLayout;
-	layout->setMargin(0);
-	layout->setSpacing(0);
-	layout->setContentsMargins(0, 0, 0, 0);
-	mDialog->setLayout(layout);
-	mDialog->setVisible(false);
-	connect(mDialog, &QDialog::finished, this, [=]() {
-		if (mMainWindow) {
-			switchToDocked();
-		} else {
-			mInnerWidget->close();
-		}
-	});
-}
-
-bool SmartDock::CloseButtonVisibilityFilter::eventFilter(QObject *obj, QEvent *event)
+bool CloseButtonVisibilityFilter::eventFilter(QObject *obj, QEvent *event)
 {
 	if (event->type() == QEvent::Show) {
 		dynamic_cast<QWidget *>(obj)->hide();

@@ -28,6 +28,13 @@ class NullKitInterpreterPlugin : public QObject, public kitBase::KitPluginInterf
 public:
 	NullKitInterpreterPlugin();
 
+	~NullKitInterpreterPlugin() = default;
+
+public Q_SLOTS:
+	void init(const kitBase::KitPluginConfigurator &configurator) override {}
+	void release() override {}
+
+public:
 	QString kitId() const override;
 
 	QString friendlyKitName() const override;

@@ -46,6 +46,17 @@ public:
 	QList<qReal::HotKeyActionInfo> hotKeyActions() override;
 
 	QIcon iconForFastSelector(kitBase::robotModel::RobotModelInterface const &robotModel) const override;
+
+	// KitPluginInterface interface
+public Q_SLOTS:
+	void init(const kitBase::KitPluginConfigurator &configurator) override
+	{
+		Q_UNUSED(configurator)
+	}
+	void release() override
+	{
+
+	}
 };
 
 }

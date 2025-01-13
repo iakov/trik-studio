@@ -33,15 +33,11 @@ NxtOsekCGeneratorPlugin::NxtOsekCGeneratorPlugin()
 	, mGenerateCodeAction(new QAction(this))
 	, mFlashRobotAction(new QAction(this))
 	, mUploadProgramAction(new QAction(this))
-	, mNxtToolsPresent(false)
-	, mMasterGenerator(nullptr)
 	, mCommunicator(utils::Singleton<communication::UsbRobotCommunicationThread>::instance())
 {
 	initActions();
 	initHotKeyActions();
 }
-
-NxtOsekCGeneratorPlugin::~NxtOsekCGeneratorPlugin() = default;
 
 QString NxtOsekCGeneratorPlugin::defaultFilePath(const QString &projectName) const
 {
@@ -179,13 +175,15 @@ void NxtOsekCGeneratorPlugin::onUploadingComplete(bool success)
 
 generatorBase::MasterGeneratorBase *NxtOsekCGeneratorPlugin::masterGenerator()
 {
-	mMasterGenerator = new NxtOsekCMasterGenerator(*mRepo
+	if(!mMasterGenerator) {
+		mMasterGenerator = new NxtOsekCMasterGenerator(*mRepo
 			, *mMainWindowInterface->errorReporter()
 			, *mParserErrorReporter
 			, *mRobotModelManager
 			, *mTextLanguage
 			, mMainWindowInterface->activeDiagram()
 			, generatorName());
+	}
 	return mMasterGenerator;
 }
 

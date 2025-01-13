@@ -29,7 +29,13 @@ class PioneerKitInterpreterPlugin : public QObject, public kitBase::KitPluginInt
 
 public:
 	PioneerKitInterpreterPlugin();
+	virtual ~PioneerKitInterpreterPlugin() override = default;
 
+public Q_SLOTS:
+	void init(const kitBase::KitPluginConfigurator &configurator) override {}
+	void release() override {}
+
+public:
 	QString kitId() const override;
 
 	QString friendlyKitName() const override;

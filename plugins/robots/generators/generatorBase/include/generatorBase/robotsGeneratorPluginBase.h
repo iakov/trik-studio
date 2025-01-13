@@ -39,8 +39,11 @@ public:
 	RobotsGeneratorPluginBase();
 	~RobotsGeneratorPluginBase() override;
 
+public Q_SLOTS:
 	void init(const kitBase::KitPluginConfigurator &configurator) override;
+	void release() override {}
 
+public:
 	QString friendlyKitName() const override;
 
 protected slots:

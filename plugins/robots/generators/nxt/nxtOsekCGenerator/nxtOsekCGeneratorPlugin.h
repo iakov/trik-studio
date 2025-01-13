@@ -13,16 +13,16 @@
  * limitations under the License. */
 
 #pragma once
+#include <QtCore/QPointer>
 
 #include <nxtKit/communication/usbRobotCommunicationThread.h>
 #include <nxtGeneratorBase/nxtGeneratorPluginBase.h>
 
 #include "nxtFlashTool.h"
+#include "nxtOsekCMasterGenerator.h"
 
 namespace nxt {
 namespace osekC {
-
-class NxtOsekCMasterGenerator;
 
 /// Main plugin class for NXT code generator. Provides generator that generates
 /// C code for nxtOSEK from robot diagrams, and interface for standalone nxt-tools
@@ -35,7 +35,7 @@ class NxtOsekCGeneratorPlugin : public NxtGeneratorPluginBase
 
 public:
 	NxtOsekCGeneratorPlugin();
-	~NxtOsekCGeneratorPlugin() override;
+	~NxtOsekCGeneratorPlugin() override = default;
 
 	void init(const kitBase::KitPluginConfigurator &configurator) override;
 
@@ -90,7 +90,7 @@ private:
 	/// Flasher object
 	QScopedPointer<NxtFlashTool> mFlashTool;
 
-	NxtOsekCMasterGenerator *mMasterGenerator;
+	QPointer<NxtOsekCMasterGenerator> mMasterGenerator;
 	const QSharedPointer<communication::UsbRobotCommunicationThread> mCommunicator;
 };
 
